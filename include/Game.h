@@ -16,7 +16,7 @@ public:
     Game();
     ~Game();
 
-    void run();
+    int run();
     bool isPositionFree(int x, int y) const;
 
 private:

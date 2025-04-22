@@ -87,7 +87,7 @@ Game::~Game() {
     SDL_Quit();
 }
 
-void Game::run() {
+int Game::run() {
     bool quit = false;
     SDL_Event e;
     
@@ -135,6 +135,8 @@ void Game::run() {
         }
         lastFrameTime = std::chrono::steady_clock::now();
     }
+
+    return 0;
 }
 
 bool Game::isPositionFree(int x, int y) const {
