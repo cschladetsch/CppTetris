@@ -406,6 +406,7 @@ void Game::drawTetromino(const Tetromino& tetromino) {
 }
 
 // A completely rewritten ghost piece function to eliminate potential hanging issues
+// A fixed ghost piece function that ensures all parts of the tetromino are shown
 void Game::drawGhostPiece() {
     if (!currentTetromino_) return;
     
@@ -418,28 +419,34 @@ void Game::drawGhostPiece() {
     // Determine how far down the piece can go
     int maxY = ghostY;
     bool canMoveDown = true;
+    int safetyCounter = 0;
+    const int MAX_ATTEMPTS = GRID_HEIGHT * 2; // Safety limit
     
-    // Manually check positions downward without creating new objects 
-    for (int testY = ghostY + 1; testY < GRID_HEIGHT + 4 && canMoveDown; testY++) {
+    // Manually check positions downward
+    for (int testY = ghostY + 1; testY < GRID_HEIGHT + 4 && canMoveDown && safetyCounter < MAX_ATTEMPTS; testY++) {
+        safetyCounter++;
+        
+        // Create a temporary tetromino at the test position
+        Tetromino tempTetromino(ghostType, ghostX, testY);
+        
+        // Apply the same rotation as the current tetromino
+        for (int i = 0; i < ghostRotation; i++) {
+            tempTetromino.rotate(*this);
+        }
+        
         // Check if this position would be valid
-        for (int y = 0; y < 4; y++) {
-            for (int x = 0; x < 4; x++) {
-                // Create a temporary tetromino to check
-                Tetromino temp(ghostType, ghostX, testY);
-                // Apply rotation
-                for (int r = 0; r < ghostRotation; r++) {
-                    temp.rotate(*this);
-                }
-                
-                // Check for collision
-                if (temp.isOccupying(ghostX + x, testY + y)) {
+        canMoveDown = true;
+        
+        // Check all blocks in the shape for collision
+        auto shape = tempTetromino.getRotatedShape();
+        for (int y = 0; y < 4 && canMoveDown; y++) {
+            for (int x = 0; x < 4 && canMoveDown; x++) {
+                if (shape[y][x]) {
                     if (!isPositionFree(ghostX + x, testY + y)) {
                         canMoveDown = false;
-                        break;
                     }
                 }
             }
-            if (!canMoveDown) break;
         }
         
         if (canMoveDown) {
@@ -447,13 +454,24 @@ void Game::drawGhostPiece() {
         }
     }
     
-    // If we can drop the piece, draw the ghost
+    // If we can drop the piece and it's different from the current position, draw the ghost
     if (maxY > ghostY) {
         SDL_Rect rect;
         rect.w = BLOCK_SIZE - 1;
         rect.h = BLOCK_SIZE - 1;
         
-        // Use a bright version of the color
+        // Create a temporary tetromino at the landing position
+        Tetromino landingTetromino(ghostType, ghostX, maxY);
+        
+        // Apply the same rotation
+        for (int i = 0; i < ghostRotation; i++) {
+            landingTetromino.rotate(*this);
+        }
+        
+        // Get the entire shape for drawing
+        auto shape = landingTetromino.getRotatedShape();
+        
+        // Use a bright version of the color for better visibility
         const auto& color = COLORS[static_cast<std::size_t>(ghostType)];
         SDL_SetRenderDrawColor(renderer_.get(), 
                               std::min(color.r + 70, 255),
@@ -461,17 +479,10 @@ void Game::drawGhostPiece() {
                               std::min(color.b + 70, 255), 
                               180);
         
-        // Create a temporary tetromino at the landing position
-        Tetromino landingTetromino(ghostType, ghostX, maxY);
-        // Apply the same rotation
-        for (int i = 0; i < ghostRotation; i++) {
-            landingTetromino.rotate(*this);
-        }
-        
-        // Draw the ghost piece
+        // Draw the ghost piece - draw each block in the shape
         for (int y = 0; y < 4; y++) {
             for (int x = 0; x < 4; x++) {
-                if (landingTetromino.isOccupying(ghostX + x, maxY + y)) {
+                if (shape[y][x]) {
                     rect.x = (ghostX + x) * BLOCK_SIZE;
                     rect.y = (maxY + y) * BLOCK_SIZE;
                     
@@ -483,9 +494,6 @@ void Game::drawGhostPiece() {
         }
     }
 }
-    
-
-
 void Game::drawSidebar() {
     int sidebarX = GRID_WIDTH * BLOCK_SIZE + 10;
     int y = 20;
