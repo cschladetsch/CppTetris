@@ -166,7 +166,7 @@ void Game::handleKeyPress(SDL_Keycode key) {
         case SDLK_RIGHT:
             currentTetromino_->moveRight(*this);
             break;
-        case SDLK_DOWN:
+        case SDLK_DOWN: {
             if (!moveTetromino(0, 1)) {
                 // Can't move down further, lock the piece
                 lockTetromino();
@@ -177,14 +177,23 @@ void Game::handleKeyPress(SDL_Keycode key) {
                 }
             }
             break;
+        }
         case SDLK_UP:
             currentTetromino_->rotate(*this);
             break;
-        case SDLK_SPACE:
-            // Hard drop
+        case SDLK_SPACE: {
+            // Hard drop - move down until collision
+            int dropCount = 0;
             while (moveTetromino(0, 1)) {
                 score_ += 1;  // Extra points for hard drop
+                dropCount++;
+                
+                // Safety check to prevent infinite loop
+                if (dropCount > GRID_HEIGHT) {
+                    break;
+                }
             }
+            
             lockTetromino();
             clearLines();
             
@@ -192,6 +201,7 @@ void Game::handleKeyPress(SDL_Keycode key) {
                 gameOver_ = true;
             }
             break;
+        }
     }
 }
 
@@ -395,58 +405,75 @@ void Game::drawTetromino(const Tetromino& tetromino) {
     }
 }
 
+// A completely rewritten ghost piece function to eliminate potential hanging issues
 void Game::drawGhostPiece() {
     if (!currentTetromino_) return;
     
-    // Create a copy of the current tetromino
-    auto ghostTetromino = std::make_unique<Tetromino>(
-        currentTetromino_->type(),
-        currentTetromino_->x(),
-        currentTetromino_->y()
-    );
+    // Create a manual copy of the current tetromino position and rotation
+    int ghostX = currentTetromino_->x();
+    int ghostY = currentTetromino_->y();
+    int ghostRotation = currentTetromino_->rotation();
+    TetrominoType ghostType = currentTetromino_->type();
     
-    // Drop it as far as it can go
-    int dropDistance = 0;
-    while (true) {
-        int newY = ghostTetromino->y() + 1;
-        
-        bool canDrop = true;
+    // Determine how far down the piece can go
+    int maxY = ghostY;
+    bool canMoveDown = true;
+    
+    // Manually check positions downward without creating new objects 
+    for (int testY = ghostY + 1; testY < GRID_HEIGHT + 4 && canMoveDown; testY++) {
+        // Check if this position would be valid
         for (int y = 0; y < 4; y++) {
             for (int x = 0; x < 4; x++) {
-                if (ghostTetromino->isOccupying(ghostTetromino->x() + x, ghostTetromino->y() + y)) {
-                    if (!isPositionFree(ghostTetromino->x() + x, newY + y)) {
-                        canDrop = false;
+                // Create a temporary tetromino to check
+                Tetromino temp(ghostType, ghostX, testY);
+                // Apply rotation
+                for (int r = 0; r < ghostRotation; r++) {
+                    temp.rotate(*this);
+                }
+                
+                // Check for collision
+                if (temp.isOccupying(ghostX + x, testY + y)) {
+                    if (!isPositionFree(ghostX + x, testY + y)) {
+                        canMoveDown = false;
                         break;
                     }
                 }
             }
-            if (!canDrop) break;
+            if (!canMoveDown) break;
         }
         
-        if (!canDrop) break;
-        
-        ghostTetromino = std::make_unique<Tetromino>(
-            ghostTetromino->type(),
-            ghostTetromino->x(),
-            newY
-        );
-        dropDistance++;
+        if (canMoveDown) {
+            maxY = testY;
+        }
     }
     
-    // Draw the ghost piece if it's different from the current tetromino
-    if (dropDistance > 0) {
+    // If we can drop the piece, draw the ghost
+    if (maxY > ghostY) {
         SDL_Rect rect;
         rect.w = BLOCK_SIZE - 1;
         rect.h = BLOCK_SIZE - 1;
         
-        // Use a semi-transparent version of the color
-        SDL_SetRenderDrawColor(renderer_.get(), 100, 100, 100, 128);
+        // Use a bright version of the color
+        const auto& color = COLORS[static_cast<std::size_t>(ghostType)];
+        SDL_SetRenderDrawColor(renderer_.get(), 
+                              std::min(color.r + 70, 255),
+                              std::min(color.g + 70, 255), 
+                              std::min(color.b + 70, 255), 
+                              180);
         
+        // Create a temporary tetromino at the landing position
+        Tetromino landingTetromino(ghostType, ghostX, maxY);
+        // Apply the same rotation
+        for (int i = 0; i < ghostRotation; i++) {
+            landingTetromino.rotate(*this);
+        }
+        
+        // Draw the ghost piece
         for (int y = 0; y < 4; y++) {
             for (int x = 0; x < 4; x++) {
-                if (ghostTetromino->isOccupying(ghostTetromino->x() + x, ghostTetromino->y() + y)) {
-                    rect.x = (ghostTetromino->x() + x) * BLOCK_SIZE;
-                    rect.y = (ghostTetromino->y() + y) * BLOCK_SIZE;
+                if (landingTetromino.isOccupying(ghostX + x, maxY + y)) {
+                    rect.x = (ghostX + x) * BLOCK_SIZE;
+                    rect.y = (maxY + y) * BLOCK_SIZE;
                     
                     if (rect.y >= 0) {  // Only draw if visible
                         SDL_RenderDrawRect(renderer_.get(), &rect);
@@ -456,6 +483,8 @@ void Game::drawGhostPiece() {
         }
     }
 }
+    
+
 
 void Game::drawSidebar() {
     int sidebarX = GRID_WIDTH * BLOCK_SIZE + 10;
