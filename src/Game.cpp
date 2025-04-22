@@ -1,4 +1,3 @@
-// src/Game.cpp
 #include "Game.h"
 #include "Color.h"
 #include <iostream>
@@ -157,3 +156,4 @@ std::chrono::milliseconds Game::getFallSpeed() const {
         static_cast<int>(INITIAL_FALL_SPEED.count() / (1 + level_ * 0.1))
     );
 }
+
