@@ -1,0 +1,75 @@
+#include "Game.h"
+
+void Game::handleKeyPress(SDL_Keycode key) {
+    switch (key) {
+        case SDLK_LEFT:
+            currentTetromino_->moveLeft(*this);
+            break;
+        case SDLK_RIGHT:
+            currentTetromino_->moveRight(*this);
+            break;
+        case SDLK_DOWN: {
+            if (!moveTetromino(0, 1)) {
+                // Can't move down further, lock the piece
+                lockTetromino();
+                clearLines();
+                
+                if (!createNewTetromino()) {
+                    gameOver_ = true;
+                }
+            }
+            break;
+        }
+        case SDLK_UP:
+            currentTetromino_->rotate(*this);
+            break;
+        case SDLK_SPACE: {
+            // Hard drop - move down until collision
+            int dropCount = 0;
+            while (moveTetromino(0, 1)) {
+                score_ += 1;  // Extra points for hard drop
+                dropCount++;
+                
+                // Safety check to prevent infinite loop
+                if (dropCount > GRID_HEIGHT) {
+                    break;
+                }
+            }
+            
+            lockTetromino();
+            clearLines();
+            
+            if (!createNewTetromino()) {
+                gameOver_ = true;
+            }
+            break;
+        }
+    }
+}
+
+bool Game::moveTetromino(int dx, int dy) {
+    int newX = currentTetromino_->x() + dx;
+    int newY = currentTetromino_->y() + dy;
+    
+    // Check if new position is valid
+    for (int y = 0; y < 4; y++) {
+        for (int x = 0; x < 4; x++) {
+            if (currentTetromino_->isOccupying(currentTetromino_->x() + x, currentTetromino_->y() + y)) {
+                if (!isPositionFree(newX + x, newY + y)) {
+                    return false;
+                }
+            }
+        }
+    }
+    
+    // Update position while preserving rotation
+    int currentRotation = currentTetromino_->rotation();
+    currentTetromino_.reset(new Tetromino(currentTetromino_->type(), newX, newY));
+    
+    // Apply the saved rotation
+    for (int i = 0; i < currentRotation; i++) {
+        currentTetromino_->rotate(*this);
+    }
+    
+    return true;
+}
