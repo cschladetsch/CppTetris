@@ -25,7 +25,7 @@ A modern implementation of the classic Tetris game using C++23 and SDL2.
 ## Requirements
 
 - C++23 compatible compiler (GCC 12+, Clang 15+, MSVC 19.32+)
-- SDL2 and SDL2_ttf libraries
+- SDL2 and SDL2\_ttf libraries
 - CMake 3.14 or higher
 
 ## Building from Source
@@ -37,7 +37,7 @@ A modern implementation of the classic Tetris game using C++23 and SDL2.
 sudo apt install build-essential cmake libsdl2-dev libsdl2-ttf-dev
 
 # Clone this repository
-git clone https://github.com/yourusername/CppTetris.git
+git clone https://github.com/cschladetsch/CppTetris.git
 cd CppTetris
 
 # Create build directory
@@ -87,3 +87,8 @@ The project uses a modular architecture with functionality separated into specia
 
 - Original Tetris game created by Alexey Pajitnov
 - SDL2 developers for the excellent graphics library
+
+## License
+
+MIT
+
