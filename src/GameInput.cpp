@@ -1,3 +1,4 @@
+// src/GameInput.cpp
 #include "Game.h"
 
 void Game::handleKeyPress(SDL_Keycode key) {
@@ -46,15 +47,29 @@ void Game::handleKeyPress(SDL_Keycode key) {
         }
     }
 }
+#include "Game.h"
 
 bool Game::moveTetromino(int dx, int dy) {
+    if (!currentTetromino_) return false;
+    
     int newX = currentTetromino_->x() + dx;
     int newY = currentTetromino_->y() + dy;
+    int currentRotation = currentTetromino_->rotation();
+    TetrominoType currentType = currentTetromino_->type();
     
-    // Check if new position is valid
+    // Create a test tetromino at the target position
+    Tetromino testTetromino(currentType, newX, newY);
+    
+    // Apply the same rotation
+    for (int i = 0; i < currentRotation; i++) {
+        testTetromino.rotateWithoutWallKick(); // Direct rotation without wall kicks
+    }
+    
+    // Check if the new position is valid using the rotated shape
+    auto shape = testTetromino.getRotatedShape();
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {
-            if (currentTetromino_->isOccupying(currentTetromino_->x() + x, currentTetromino_->y() + y)) {
+            if (shape[y][x]) {
                 if (!isPositionFree(newX + x, newY + y)) {
                     return false;
                 }
@@ -62,13 +77,13 @@ bool Game::moveTetromino(int dx, int dy) {
         }
     }
     
-    // Update position while preserving rotation
-    int currentRotation = currentTetromino_->rotation();
-    currentTetromino_.reset(new Tetromino(currentTetromino_->type(), newX, newY));
-    
-    // Apply the saved rotation
-    for (int i = 0; i < currentRotation; i++) {
-        currentTetromino_->rotate(*this);
+    // Update position directly on the current tetromino
+    // This avoids creating a new object which might introduce inconsistencies
+    if (dx != 0) {
+        currentTetromino_->setPosition(newX, currentTetromino_->y());
+    }
+    if (dy != 0) {
+        currentTetromino_->setPosition(currentTetromino_->x(), newY);
     }
     
     return true;

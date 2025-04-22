@@ -22,6 +22,16 @@ public:
 
     bool isOccupying(int x, int y) const;
     std::array<std::array<bool, 4>, 4> getRotatedShape() const;
+    
+    // Direct state manipulation methods
+    void setPosition(int x, int y) {
+        x_ = x;
+        y_ = y;
+    }
+    
+    void rotateWithoutWallKick() {
+        rotation_ = (rotation_ + 1) % 4;
+    }
 
 private:
     TetrominoType type_;

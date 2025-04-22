@@ -1,5 +1,39 @@
 #include "Tetromino.h"
 #include "Game.h"
+#include <array>
+#include <vector>
+
+// SRS (Super Rotation System) kick data
+// Each array contains the offsets to test for each rotation
+
+// Kick table for J, L, S, T, Z pieces
+const std::vector<std::vector<std::pair<int, int>>> JLSTZ_KICKS = {
+    // 0->1
+    {{0, 0}, {-1, 0}, {-1, -1}, {0, 2}, {-1, 2}},
+    // 1->2
+    {{0, 0}, {1, 0}, {1, 1}, {0, -2}, {1, -2}},
+    // 2->3
+    {{0, 0}, {1, 0}, {1, -1}, {0, 2}, {1, 2}},
+    // 3->0
+    {{0, 0}, {-1, 0}, {-1, 1}, {0, -2}, {-1, -2}}
+};
+
+// Kick table for I piece
+const std::vector<std::vector<std::pair<int, int>>> I_KICKS = {
+    // 0->1
+    {{0, 0}, {-2, 0}, {1, 0}, {-2, 1}, {1, -2}},
+    // 1->2
+    {{0, 0}, {-1, 0}, {2, 0}, {-1, -2}, {2, 1}},
+    // 2->3
+    {{0, 0}, {2, 0}, {-1, 0}, {2, -1}, {-1, 2}},
+    // 3->0
+    {{0, 0}, {1, 0}, {-2, 0}, {1, 2}, {-2, -1}}
+};
+
+// No kicks for O piece since it's symmetric
+const std::vector<std::vector<std::pair<int, int>>> O_KICKS = {
+    {{0, 0}}, {{0, 0}}, {{0, 0}}, {{0, 0}}
+};
 
 Tetromino::Tetromino(TetrominoType type, int x, int y) 
     : type_(type), x_(x), y_(y), rotation_(0) {
@@ -60,18 +94,22 @@ bool Tetromino::isValidPosition(const Game& game, int newX, int newY, int newRot
 }
 
 void Tetromino::rotate(const Game& game) {
+    int oldRotation = rotation_;
     int newRotation = (rotation_ + 1) % 4;
     
-    // Try basic rotation
-    if (isValidPosition(game, x_, y_, newRotation)) {
-        rotation_ = newRotation;
-        return;
+    // Get the appropriate kick table based on tetromino type
+    const std::vector<std::vector<std::pair<int, int>>>* kickTable;
+    
+    if (type_ == TetrominoType::I) {
+        kickTable = &I_KICKS;
+    } else if (type_ == TetrominoType::O) {
+        kickTable = &O_KICKS;
+    } else {
+        kickTable = &JLSTZ_KICKS;
     }
     
-    // Try wall kicks
-    const std::array<std::pair<int, int>, 4> kicks = {{
-        {1, 0}, {-1, 0}, {0, 1}, {0, -1}
-    }};
+    // Try each test position from the kick table
+    const std::vector<std::pair<int, int>>& kicks = (*kickTable)[oldRotation];
     
     for (const auto& [dx, dy] : kicks) {
         if (isValidPosition(game, x_ + dx, y_ + dy, newRotation)) {
@@ -82,7 +120,25 @@ void Tetromino::rotate(const Game& game) {
         }
     }
     
-    // Can't rotate
+    // If we couldn't rotate, try a more aggressive approach with additional tests
+    // This helps with pieces that get stuck on walls
+    const std::array<std::pair<int, int>, 8> extraKicks = {{
+        {-2, 0}, {2, 0},   // farther left/right
+        {0, -2}, {0, 2},   // farther up/down
+        {-2, -1}, {2, -1}, // diagonal kicks
+        {-2, 1}, {2, 1}    // diagonal kicks
+    }};
+    
+    for (const auto& [dx, dy] : extraKicks) {
+        if (isValidPosition(game, x_ + dx, y_ + dy, newRotation)) {
+            x_ += dx;
+            y_ += dy;
+            rotation_ = newRotation;
+            return;
+        }
+    }
+    
+    // If we get here, rotation is not possible
 }
 
 void Tetromino::moveLeft(const Game& game) {

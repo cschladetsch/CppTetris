@@ -55,6 +55,9 @@ void Game::clearLines() {
     }
 }
 
+#include "Game.h"
+#include <random>
+
 bool Game::createNewTetromino() {
     // Use the next tetromino type that was previously generated
     TetrominoType type = nextTetrominoType_;
@@ -63,16 +66,21 @@ bool Game::createNewTetromino() {
     std::uniform_int_distribution<int> dist(0, static_cast<int>(TetrominoType::COUNT) - 1);
     nextTetrominoType_ = static_cast<TetrominoType>(dist(rng_));
     
-    currentTetromino_ = std::make_unique<Tetromino>(type, GRID_WIDTH / 2 - 2, 0);
+    // Initial position - centered at the top with an offset for the I piece
+    int startX = GRID_WIDTH / 2 - 2;
+    // Start higher for I piece to give more space
+    int startY = (type == TetrominoType::I) ? -1 : 0;
     
-    // Check if new tetromino can be placed
+    // Create the new tetromino
+    currentTetromino_ = std::make_unique<Tetromino>(type, startX, startY);
+    
+    // Check if the new tetromino can be placed - only check visible cells
+    // This gives the player a chance to move/rotate before collision
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {
-            int gridX = currentTetromino_->x() + x;
-            int gridY = currentTetromino_->y() + y;
-            
-            if (currentTetromino_->isOccupying(gridX, gridY)) {
-                if (!isPositionFree(gridX, gridY)) {
+            if (currentTetromino_->isOccupying(startX + x, startY + y)) {
+                // Only check collisions below y=0 (visible grid area)
+                if (startY + y >= 0 && !isPositionFree(startX + x, startY + y)) {
                     return false;  // Game over
                 }
             }
@@ -81,7 +89,6 @@ bool Game::createNewTetromino() {
     
     return true;
 }
-
 void Game::resetGame() {
     // Clear grid
     for (auto& row : grid_) {

@@ -1,8 +1,8 @@
+// src/GameGhostPiece.cpp
 #include "Game.h"
 #include "Color.h"
 #include <algorithm>
 
-// A completely rewritten ghost piece function to eliminate potential hanging issues
 void Game::drawGhostPiece() {
     if (!currentTetromino_) return;
     
