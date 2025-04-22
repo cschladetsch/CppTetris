@@ -2,13 +2,12 @@
 #include <iostream>
 #include <exception>
 
-int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[]) {
+int main(int argc, char* args[]) {
     try {
-        Game game;
-        game.run();
-        return EXIT_SUCCESS;
+        Game().run();
+        return 0;
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
-        return EXIT_FAILURE;
+        return 1;
     }
 }
