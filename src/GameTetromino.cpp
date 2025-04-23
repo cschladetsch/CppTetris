@@ -1,5 +1,6 @@
-#include "Game.h"
 #include <algorithm>
+#include <random>
+#include "Game.h"
 
 void Game::lockTetromino() {
     for (int y = 0; y < 4; y++) {
@@ -54,9 +55,6 @@ void Game::clearLines() {
         level_ = std::min(1 + linesCleared_ / LINES_PER_LEVEL, MAX_LEVEL);
     }
 }
-
-#include "Game.h"
-#include <random>
 
 bool Game::createNewTetromino() {
     // Use the next tetromino type that was previously generated
