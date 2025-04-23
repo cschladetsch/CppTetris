@@ -1,5 +1,6 @@
 #include "Renderer.h"
 #include "Game.h"
+#include "Color.h"  // Added Color.h header for COLORS array
 #include <format>
 #include <algorithm>
 
@@ -7,7 +8,8 @@ Renderer::Renderer(SDL_Renderer* renderer, TTF_Font* font)
     : renderer_(renderer), font_(font) {}
 
 void Renderer::clear() {
-    SDL_SetRenderDrawColor(renderer_, 25, 25, 25, 255);
+    SDL_SetRenderDrawColor(renderer_, SCREEN_CLEAR_COLOR_R, SCREEN_CLEAR_COLOR_G, 
+                          SCREEN_CLEAR_COLOR_B, SCREEN_CLEAR_COLOR_A);
     SDL_RenderClear(renderer_);
 }
 
@@ -17,11 +19,11 @@ void Renderer::present() {
 
 void Renderer::drawGrid(const std::vector<std::vector<std::optional<TetrominoType>>>& grid) {
     SDL_Rect rect;
-    rect.w = BLOCK_SIZE - 1;
-    rect.h = BLOCK_SIZE - 1;
+    rect.w = BLOCK_SIZE - BLOCK_BORDER_THICKNESS;
+    rect.h = BLOCK_SIZE - BLOCK_BORDER_THICKNESS;
     
     // Draw outline
-    SDL_SetRenderDrawColor(renderer_, 50, 50, 50, 255);
+    SDL_SetRenderDrawColor(renderer_, GRID_LINE_COLOR, GRID_LINE_COLOR, GRID_LINE_COLOR, ALPHA_OPAQUE);
     SDL_Rect border = {0, 0, GRID_WIDTH * BLOCK_SIZE, GRID_HEIGHT * BLOCK_SIZE};
     SDL_RenderDrawRect(renderer_, &border);
     
@@ -33,17 +35,18 @@ void Renderer::drawGrid(const std::vector<std::vector<std::optional<TetrominoTyp
             
             if (grid[y][x].has_value()) {
                 const auto& color = COLORS[static_cast<std::size_t>(grid[y][x].value())];
-                SDL_SetRenderDrawColor(renderer_, color.r, color.g, color.b, 255);
+                SDL_SetRenderDrawColor(renderer_, color.r, color.g, color.b, ALPHA_OPAQUE);
                 SDL_RenderFillRect(renderer_, &rect);
                 
                 // Add 3D effect with darker borders
                 SDL_SetRenderDrawColor(renderer_, 
-                                     color.r/2, color.g/2, color.b/2, 255);
+                                     color.r/HALF, color.g/HALF, color.b/HALF, ALPHA_OPAQUE);
                 SDL_Rect border = {rect.x, rect.y, rect.w, rect.h};
                 SDL_RenderDrawRect(renderer_, &border);
             } else {
                 // Draw empty cell
-                SDL_SetRenderDrawColor(renderer_, 40, 40, 40, 255);
+                SDL_SetRenderDrawColor(renderer_, EMPTY_CELL_COLOR, EMPTY_CELL_COLOR, 
+                                      EMPTY_CELL_COLOR, ALPHA_OPAQUE);
                 SDL_RenderDrawRect(renderer_, &rect);
             }
         }
@@ -52,14 +55,14 @@ void Renderer::drawGrid(const std::vector<std::vector<std::optional<TetrominoTyp
 
 void Renderer::drawTetromino(const Tetromino& tetromino) {
     SDL_Rect rect;
-    rect.w = BLOCK_SIZE - 1;
-    rect.h = BLOCK_SIZE - 1;
+    rect.w = BLOCK_SIZE - BLOCK_BORDER_THICKNESS;
+    rect.h = BLOCK_SIZE - BLOCK_BORDER_THICKNESS;
     
     const auto& color = COLORS[static_cast<std::size_t>(tetromino.type())];
-    SDL_SetRenderDrawColor(renderer_, color.r, color.g, color.b, 255);
+    SDL_SetRenderDrawColor(renderer_, color.r, color.g, color.b, ALPHA_OPAQUE);
     
-    for (int y = 0; y < 4; y++) {
-        for (int x = 0; x < 4; x++) {
+    for (int y = 0; y < TETROMINO_GRID_SIZE; y++) {
+        for (int x = 0; x < TETROMINO_GRID_SIZE; x++) {
             if (tetromino.isOccupying(tetromino.x() + x, tetromino.y() + y)) {
                 rect.x = (tetromino.x() + x) * BLOCK_SIZE;
                 rect.y = (tetromino.y() + y) * BLOCK_SIZE;
@@ -69,11 +72,11 @@ void Renderer::drawTetromino(const Tetromino& tetromino) {
                     
                     // Add 3D effect
                     SDL_SetRenderDrawColor(renderer_, 
-                                         color.r/2, color.g/2, color.b/2, 255);
+                                         color.r/HALF, color.g/HALF, color.b/HALF, ALPHA_OPAQUE);
                     SDL_Rect border = {rect.x, rect.y, rect.w, rect.h};
                     SDL_RenderDrawRect(renderer_, &border);
                     
-                    SDL_SetRenderDrawColor(renderer_, color.r, color.g, color.b, 255);
+                    SDL_SetRenderDrawColor(renderer_, color.r, color.g, color.b, ALPHA_OPAQUE);
                 }
             }
         }
@@ -110,8 +113,8 @@ void Renderer::drawGhostPiece(const Game& game, const Tetromino& tetromino) {
         
         // Check all blocks in the shape for collision
         auto shape = tempTetromino.getRotatedShape();
-        for (int y = 0; y < 4 && canMoveDown; y++) {
-            for (int x = 0; x < 4 && canMoveDown; x++) {
+        for (int y = 0; y < TETROMINO_GRID_SIZE && canMoveDown; y++) {
+            for (int x = 0; x < TETROMINO_GRID_SIZE && canMoveDown; x++) {
                 if (shape[y][x]) {
                     if (!game.isPositionFree(ghostX + x, testY + y)) {
                         canMoveDown = false;
@@ -128,8 +131,8 @@ void Renderer::drawGhostPiece(const Game& game, const Tetromino& tetromino) {
     // If we can drop the piece and it's different from the current position, draw the ghost
     if (maxY > ghostY) {
         SDL_Rect rect;
-        rect.w = BLOCK_SIZE - 1;
-        rect.h = BLOCK_SIZE - 1;
+        rect.w = BLOCK_SIZE - BLOCK_BORDER_THICKNESS;
+        rect.h = BLOCK_SIZE - BLOCK_BORDER_THICKNESS;
         
         // Create a temporary tetromino at the landing position
         Tetromino landingTetromino(ghostType, ghostX, maxY);
@@ -145,14 +148,14 @@ void Renderer::drawGhostPiece(const Game& game, const Tetromino& tetromino) {
         // Use a bright version of the color for better visibility
         const auto& color = COLORS[static_cast<std::size_t>(ghostType)];
         SDL_SetRenderDrawColor(renderer_, 
-                              std::min(color.r + 70, 255),
-                              std::min(color.g + 70, 255), 
-                              std::min(color.b + 70, 255), 
-                              180);
+                              std::min(color.r + GHOST_PIECE_BRIGHTNESS_BOOST, COLOR_MAX),
+                              std::min(color.g + GHOST_PIECE_BRIGHTNESS_BOOST, COLOR_MAX), 
+                              std::min(color.b + GHOST_PIECE_BRIGHTNESS_BOOST, COLOR_MAX), 
+                              ALPHA_GHOST_PIECE);
         
         // Draw the ghost piece - draw each block in the shape
-        for (int y = 0; y < 4; y++) {
-            for (int x = 0; x < 4; x++) {
+        for (int y = 0; y < TETROMINO_GRID_SIZE; y++) {
+            for (int x = 0; x < TETROMINO_GRID_SIZE; x++) {
                 if (shape[y][x]) {
                     rect.x = (ghostX + x) * BLOCK_SIZE;
                     rect.y = (maxY + y) * BLOCK_SIZE;
@@ -166,89 +169,41 @@ void Renderer::drawGhostPiece(const Game& game, const Tetromino& tetromino) {
     }
 }
 
-void Renderer::drawSidebar(const Game& game) {
-    int sidebarX = GRID_WIDTH * BLOCK_SIZE + 10;
-    int sidebarWidth = WINDOW_WIDTH - sidebarX - 10;
-    int y = 20;
+void Renderer::drawSidebar(const Game& game, TetrominoType nextTetrominoType) {
+    int sidebarX = GRID_WIDTH * BLOCK_SIZE + SIDEBAR_PADDING;
+    int y = UI_PADDING_MEDIUM;
     
-    // Draw sidebar background
-    SDL_SetRenderDrawColor(renderer_, 35, 35, 35, 255);
-    SDL_Rect sidebarBg = {sidebarX - 5, 0, sidebarWidth + 5, WINDOW_HEIGHT};
-    SDL_RenderFillRect(renderer_, &sidebarBg);
+    // Draw "Next" label
+    drawText("Next:", sidebarX, y);
+    y += UI_PADDING_LARGE;
     
-    // Draw section divider line
-    SDL_SetRenderDrawColor(renderer_, 60, 60, 60, 255);
-    SDL_RenderDrawLine(renderer_, sidebarX - 5, 0, sidebarX - 5, WINDOW_HEIGHT);
+    // Draw next tetromino preview
+    drawNextTetromino(nextTetrominoType, sidebarX + BLOCK_SIZE, y);
     
-    // Draw "NEXT" header with highlight
-    SDL_SetRenderDrawColor(renderer_, 70, 70, 70, 255);
-    SDL_Rect headerBg = {sidebarX, y - 5, sidebarWidth - 10, 30};
-    SDL_RenderFillRect(renderer_, &headerBg);
+    y += TETROMINO_GRID_SIZE * BLOCK_SIZE + UI_PADDING_MEDIUM;
     
-    drawText("NEXT", sidebarX + 5, y);
-    y += 40;
+    // Draw score
+    drawText(std::format("Score: {}", game.getScore()), sidebarX, y);
+    y += UI_PADDING_XLARGE;
     
-    // Draw next tetromino preview with improved background
-    int previewSize = 4 * BLOCK_SIZE;
-    SDL_SetRenderDrawColor(renderer_, 45, 45, 45, 255);
-    SDL_Rect previewBg = {sidebarX, y, previewSize + 20, previewSize + 20};
-    SDL_RenderFillRect(renderer_, &previewBg);
+    // Draw level
+    drawText(std::format("Level: {}", game.getLevel()), sidebarX, y);
+    y += UI_PADDING_XLARGE;
     
-    // Draw preview border
-    SDL_SetRenderDrawColor(renderer_, 70, 70, 70, 255);
-    SDL_Rect previewBorder = {sidebarX, y, previewSize + 20, previewSize + 20};
-    SDL_RenderDrawRect(renderer_, &previewBorder);
+    // Draw lines cleared
+    drawText(std::format("Lines: {}", game.getLinesCleared()), sidebarX, y);
+    y += UI_PADDING_XXLARGE;
     
-    drawNextTetromino(game.getNextTetrominoType(), sidebarX + 10, y + 10);
-    
-    y += previewSize + 40;
-    
-    // Draw score section with highlight
-    SDL_SetRenderDrawColor(renderer_, 70, 70, 70, 255);
-    SDL_Rect scoreBg = {sidebarX, y - 5, sidebarWidth - 10, 30};
-    SDL_RenderFillRect(renderer_, &scoreBg);
-    
-    drawText("SCORE", sidebarX + 5, y);
-    y += 35;
-    
-    // Draw score value with emphasis
-    SDL_SetRenderDrawColor(renderer_, 45, 45, 45, 255);
-    SDL_Rect scoreValueBg = {sidebarX, y - 5, sidebarWidth - 10, 35};
-    SDL_RenderFillRect(renderer_, &scoreValueBg);
-    
-    drawText(std::format("{}", game.getScore()), sidebarX + 10, y);
-    y += 50;
-    
-    // Draw level section
-    SDL_SetRenderDrawColor(renderer_, 70, 70, 70, 255);
-    SDL_Rect levelBg = {sidebarX, y - 5, sidebarWidth - 10, 30};
-    SDL_RenderFillRect(renderer_, &levelBg);
-    
-    drawText("LEVEL", sidebarX + 5, y);
-    y += 35;
-    
-    // Draw level value
-    SDL_SetRenderDrawColor(renderer_, 45, 45, 45, 255);
-    SDL_Rect levelValueBg = {sidebarX, y - 5, sidebarWidth - 10, 35};
-    SDL_RenderFillRect(renderer_, &levelValueBg);
-    
-    drawText(std::format("{}", game.getLevel()), sidebarX + 10, y);
-    y += 50;
-    
-    // Draw lines section
-    SDL_SetRenderDrawColor(renderer_, 70, 70, 70, 255);
-    SDL_Rect linesBg = {sidebarX, y - 5, sidebarWidth - 10, 30};
-    SDL_RenderFillRect(renderer_, &linesBg);
-    
-    drawText("LINES", sidebarX + 5, y);
-    y += 35;
-    
-    // Draw lines value
-    SDL_SetRenderDrawColor(renderer_, 45, 45, 45, 255);
-    SDL_Rect linesValueBg = {sidebarX, y - 5, sidebarWidth - 10, 35};
-    SDL_RenderFillRect(renderer_, &linesValueBg);
-    
-    drawText(std::format("{}", game.getLinesCleared()), sidebarX + 10, y);
+    // Draw controls with Unicode arrows
+    drawText("Controls:", sidebarX, y);
+    y += UI_PADDING_LARGE;
+    drawText("\u2190 \u2192 : Move", sidebarX, y);  // Unicode LEFT/RIGHT ARROW
+    y += UI_PADDING_LARGE;
+    drawText("\u2191 : Rotate", sidebarX, y);       // Unicode UP ARROW
+    y += UI_PADDING_LARGE;
+    drawText("\u2193 : Soft Drop", sidebarX, y);    // Unicode DOWN ARROW
+    y += UI_PADDING_LARGE;
+    drawText("Space : Hard Drop", sidebarX, y);
 }
 
 void Renderer::drawNextTetromino(TetrominoType type, int x, int y) {
@@ -256,17 +211,17 @@ void Renderer::drawNextTetromino(TetrominoType type, int x, int y) {
     Tetromino nextTetromino(type, 0, 0);
     
     // Calculate the center of the preview area
-    int previewSize = 4 * BLOCK_SIZE;
-    int centerX = x + previewSize / 2;
-    int centerY = y + previewSize / 2;
+    int previewSize = TETROMINO_GRID_SIZE * BLOCK_SIZE;
+    int centerX = x + previewSize / HALF;
+    int centerY = y + previewSize / HALF;
     
     // Draw the tetromino blocks
     SDL_Rect rect;
-    rect.w = BLOCK_SIZE - 1;
-    rect.h = BLOCK_SIZE - 1;
+    rect.w = BLOCK_SIZE - BLOCK_BORDER_THICKNESS;
+    rect.h = BLOCK_SIZE - BLOCK_BORDER_THICKNESS;
     
     const auto& color = COLORS[static_cast<std::size_t>(type)];
-    SDL_SetRenderDrawColor(renderer_, color.r, color.g, color.b, 255);
+    SDL_SetRenderDrawColor(renderer_, color.r, color.g, color.b, ALPHA_OPAQUE);
     
     // Draw the tetromino centered in the preview area
     auto shape = nextTetromino.getRotatedShape();
@@ -276,9 +231,9 @@ void Renderer::drawNextTetromino(TetrominoType type, int x, int y) {
     int offsetY = 0;
     
     // Count rows and columns that have blocks
-    int minRow = 4, maxRow = -1, minCol = 4, maxCol = -1;
-    for (int row = 0; row < 4; row++) {
-        for (int col = 0; col < 4; col++) {
+    int minRow = TETROMINO_GRID_SIZE, maxRow = -1, minCol = TETROMINO_GRID_SIZE, maxCol = -1;
+    for (int row = 0; row < TETROMINO_GRID_SIZE; row++) {
+        for (int col = 0; col < TETROMINO_GRID_SIZE; col++) {
             if (shape[row][col]) {
                 minRow = std::min(minRow, row);
                 maxRow = std::max(maxRow, row);
@@ -292,8 +247,8 @@ void Renderer::drawNextTetromino(TetrominoType type, int x, int y) {
     if (minRow <= maxRow && minCol <= maxCol) {
         int width = maxCol - minCol + 1;
         int height = maxRow - minRow + 1;
-        offsetX = centerX - ((width * BLOCK_SIZE) / 2);
-        offsetY = centerY - ((height * BLOCK_SIZE) / 2);
+        offsetX = centerX - ((width * BLOCK_SIZE) / HALF);
+        offsetY = centerY - ((height * BLOCK_SIZE) / HALF);
         
         // Adjust for the min row/col offset
         offsetX -= minCol * BLOCK_SIZE;
@@ -301,8 +256,8 @@ void Renderer::drawNextTetromino(TetrominoType type, int x, int y) {
     }
     
     // Draw the tetromino blocks
-    for (int row = 0; row < 4; row++) {
-        for (int col = 0; col < 4; col++) {
+    for (int row = 0; row < TETROMINO_GRID_SIZE; row++) {
+        for (int col = 0; col < TETROMINO_GRID_SIZE; col++) {
             if (shape[row][col]) {
                 rect.x = offsetX + (col * BLOCK_SIZE);
                 rect.y = offsetY + (row * BLOCK_SIZE);
@@ -311,19 +266,24 @@ void Renderer::drawNextTetromino(TetrominoType type, int x, int y) {
                 
                 // Add 3D effect
                 SDL_SetRenderDrawColor(renderer_, 
-                                     color.r/2, color.g/2, color.b/2, 255);
+                                     color.r/HALF, color.g/HALF, color.b/HALF, ALPHA_OPAQUE);
                 SDL_Rect border = {rect.x, rect.y, rect.w, rect.h};
                 SDL_RenderDrawRect(renderer_, &border);
                 
-                SDL_SetRenderDrawColor(renderer_, color.r, color.g, color.b, 255);
+                SDL_SetRenderDrawColor(renderer_, color.r, color.g, color.b, ALPHA_OPAQUE);
             }
         }
     }
+    
+    // Draw outline around the preview area
+    SDL_SetRenderDrawColor(renderer_, GRID_LINE_COLOR, GRID_LINE_COLOR, GRID_LINE_COLOR, ALPHA_OPAQUE);
+    SDL_Rect previewRect = {x, y, previewSize, previewSize};
+    SDL_RenderDrawRect(renderer_, &previewRect);
 }
 
 void Renderer::drawText(const std::string& text, int x, int y) {
     if (font_) {
-        SDL_Color textColor = {220, 220, 220, 255};
+        SDL_Color textColor = {TEXT_COLOR_R, TEXT_COLOR_G, TEXT_COLOR_B, ALPHA_OPAQUE};
         
         // Use Blended rendering for better quality with Unicode characters
         SDL_Surface* surface = TTF_RenderUTF8_Blended(font_, text.c_str(), textColor);
@@ -341,21 +301,22 @@ void Renderer::drawText(const std::string& text, int x, int y) {
         }
     } else {
         // Fallback if font loading failed: draw a colored rectangle
-        SDL_SetRenderDrawColor(renderer_, 200, 200, 200, 255);
-        SDL_Rect rect = {x, y, static_cast<int>(text.length() * 8), 20};
+        SDL_SetRenderDrawColor(renderer_, TEXT_COLOR_R, TEXT_COLOR_G, TEXT_COLOR_B, ALPHA_OPAQUE);
+        SDL_Rect rect = {x, y, static_cast<int>(text.length() * TEXT_FALLBACK_CHAR_WIDTH), TEXT_FALLBACK_HEIGHT};
         SDL_RenderDrawRect(renderer_, &rect);
     }
 }
 
 void Renderer::drawGameOver(int score) {
-    SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 200);
+    SDL_SetRenderDrawColor(renderer_, OVERLAY_COLOR_R, OVERLAY_COLOR_G, 
+                          OVERLAY_COLOR_B, OVERLAY_COLOR_A);
     SDL_Rect overlay = {0, 0, WINDOW_WIDTH, WINDOW_HEIGHT};
     SDL_RenderFillRect(renderer_, &overlay);
     
-    int centerX = WINDOW_WIDTH / 2;
-    int centerY = WINDOW_HEIGHT / 2;
+    int centerX = WINDOW_WIDTH / HALF;
+    int centerY = WINDOW_HEIGHT / HALF;
     
-    drawText("GAME OVER", centerX - 80, centerY - 30);
-    drawText(std::format("Final Score: {}", score), centerX - 80, centerY);
-    drawText("Press ENTER to restart", centerX - 110, centerY + 30);
+    drawText("GAME OVER", centerX - GAME_OVER_OFFSET_X, centerY - GAME_OVER_OFFSET_Y);
+    drawText(std::format("Final Score: {}", score), centerX - GAME_OVER_OFFSET_X, centerY);
+    drawText("Press ENTER to restart", centerX - GAME_OVER_OFFSET_X - UI_PADDING_LARGE, centerY + GAME_OVER_OFFSET_Y);
 }

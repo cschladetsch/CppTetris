@@ -6,11 +6,11 @@
 #include <vector>
 #include <optional>
 #include <random>
-#include <string>
 #include <chrono>
-#include "Tetromino.h"
+#include "TetrominoManager.h"
+#include "InputHandler.h"
+#include "GameRenderer.h"
 #include "Constants.h"
-#include "Renderer.h"
 
 class Game {
 public:
@@ -20,37 +20,51 @@ public:
     void run();
     bool isPositionFree(int x, int y) const;
     
-    // Getters for renderer to access game state
+    // Accessors
     const std::vector<std::vector<std::optional<TetrominoType>>>& getGrid() const { return grid_; }
-    const Tetromino* getCurrentTetromino() const { return currentTetromino_.get(); }
-    TetrominoType getNextTetrominoType() const { return nextTetrominoType_; }
     bool isGameOver() const { return gameOver_; }
     int getScore() const { return score_; }
     int getLevel() const { return level_; }
     int getLinesCleared() const { return linesCleared_; }
+    
+    // Game state modifiers
+    void resetGame();
+    void setGameOver() { gameOver_ = true; }
+    void increaseScore(int points) { score_ += points; }
+    void incrementLinesCleared(int lines) { 
+        linesCleared_ += lines; 
+        level_ = std::min(INITIAL_LEVEL + linesCleared_ / LINES_PER_LEVEL, MAX_LEVEL);
+    }
 
 private:
+    // SDL Resources
     std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)> window_;
     std::unique_ptr<SDL_Renderer, decltype(&SDL_DestroyRenderer)> renderer_;
     std::unique_ptr<TTF_Font, decltype(&TTF_CloseFont)> font_;
-    std::unique_ptr<Renderer> renderer_instance_; // Renderer object
     
+    // Game state
     std::vector<std::vector<std::optional<TetrominoType>>> grid_;
-    std::unique_ptr<Tetromino> currentTetromino_;
-    TetrominoType nextTetrominoType_;
     bool gameOver_;
+    bool quit_;
     int score_;
     int level_;
     int linesCleared_;
-    std::mt19937 rng_;
-
-    // Game logic functions
-    void render();
+    
+    // Component managers
+    std::unique_ptr<TetrominoManager> tetrominoManager_;
+    std::unique_ptr<InputHandler> inputHandler_;
+    std::unique_ptr<GameRenderer> gameRenderer_;
+    
+    // Initialization methods
+    void initSDL();
+    void loadFont();
+    
+    // Game loop methods
+    void updateGameState(const std::chrono::steady_clock::time_point& currentTime, 
+                         std::chrono::steady_clock::time_point& lastFallTime);
+    void capFrameRate(std::chrono::steady_clock::time_point& lastFrameTime);
+    
+    // Game mechanics
     std::chrono::milliseconds getFallSpeed() const;
-    void handleKeyPress(SDL_Keycode key);
-    bool moveTetromino(int dx, int dy);
-    void lockTetromino();
-    void clearLines();
-    bool createNewTetromino();
-    void resetGame();
 };
+// Game.h

@@ -2,15 +2,13 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
-#include <memory>
 #include <string>
 #include <vector>
 #include <optional>
 #include "Tetromino.h"
-#include "Color.h"
 #include "Constants.h"
 
-class Game; // Forward declaration
+class Game;
 
 class Renderer {
 public:
@@ -24,7 +22,7 @@ public:
     void drawGrid(const std::vector<std::vector<std::optional<TetrominoType>>>& grid);
     void drawTetromino(const Tetromino& tetromino);
     void drawGhostPiece(const Game& game, const Tetromino& tetromino);
-    void drawSidebar(const Game& game);
+    void drawSidebar(const Game& game, TetrominoType nextTetrominoType);
     void drawNextTetromino(TetrominoType type, int x, int y);
     void drawText(const std::string& text, int x, int y);
     void drawGameOver(int score);
@@ -33,3 +31,4 @@ private:
     SDL_Renderer* renderer_; // Non-owning pointer
     TTF_Font* font_;         // Non-owning pointer
 };
+// Renderer.h

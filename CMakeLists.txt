@@ -13,24 +13,9 @@ find_package(SDL2_ttf REQUIRED)
 # Include directories
 include_directories(${SDL2_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS} include)
 
-# Define source files - removed duplicate implementation files
-set(SOURCES
-    src/main.cpp
-    src/Game.cpp
-    src/Renderer.cpp
-    src/Tetromino.cpp
-    src/Color.cpp
-)
-
-# Define header files
-set(HEADERS
-    include/Game.h
-    include/Tetromino.h
-    include/TetrominoType.h
-    include/Color.h
-    include/Constants.h
-    include/Renderer.h
-)
+# Use file globs to automatically find all source and header files
+file(GLOB SOURCES src/*.cpp)
+file(GLOB HEADERS include/*.h)
 
 # Create executable
 add_executable(tetris ${SOURCES} ${HEADERS})
