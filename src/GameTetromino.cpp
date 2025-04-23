@@ -3,8 +3,8 @@
 #include "Game.h"
 
 void Game::lockTetromino() {
-    for (int y = 0; y < 4; y++) {
-        for (int x = 0; x < 4; x++) {
+    for (int y = 0; y < TETROMINO_GRID_SIZE; y++) {
+        for (int x = 0; x < TETROMINO_GRID_SIZE; x++) {
             int gridX = currentTetromino_->x() + x;
             int gridY = currentTetromino_->y() + y;
             
@@ -47,12 +47,12 @@ void Game::clearLines() {
     if (linesCleared > 0) {
         // Update score based on number of lines cleared
         static const std::array<int, 4> lineScores = {100, 300, 500, 800};
-        score_ += lineScores[std::min(linesCleared, 4) - 1] * level_;
+        score_ += lineScores[std::min(linesCleared, TETROMINO_GRID_SIZE) - 1] * level_;
         
         linesCleared_ += linesCleared;
         
         // Update level
-        level_ = std::min(1 + linesCleared_ / LINES_PER_LEVEL, MAX_LEVEL);
+        level_ = std::min(INITIAL_LEVEL + linesCleared_ / LINES_PER_LEVEL, MAX_LEVEL);
     }
 }
 
@@ -65,17 +65,17 @@ bool Game::createNewTetromino() {
     nextTetrominoType_ = static_cast<TetrominoType>(dist(rng_));
     
     // Initial position - centered at the top with an offset for the I piece
-    int startX = GRID_WIDTH / 2 - 2;
+    int startX = GRID_WIDTH / HALF - HALF;
     // Start higher for I piece to give more space
-    int startY = (type == TetrominoType::I) ? -1 : 0;
+    int startY = (type == TetrominoType::I) ? MOVE_LEFT : NO_MOVE;
     
     // Create the new tetromino
     currentTetromino_ = std::make_unique<Tetromino>(type, startX, startY);
     
     // Check if the new tetromino can be placed - only check visible cells
     // This gives the player a chance to move/rotate before collision
-    for (int y = 0; y < 4; y++) {
-        for (int x = 0; x < 4; x++) {
+    for (int y = 0; y < TETROMINO_GRID_SIZE; y++) {
+        for (int x = 0; x < TETROMINO_GRID_SIZE; x++) {
             if (currentTetromino_->isOccupying(startX + x, startY + y)) {
                 // Only check collisions below y=0 (visible grid area)
                 if (startY + y >= 0 && !isPositionFree(startX + x, startY + y)) {
@@ -87,6 +87,7 @@ bool Game::createNewTetromino() {
     
     return true;
 }
+
 void Game::resetGame() {
     // Clear grid
     for (auto& row : grid_) {
@@ -95,7 +96,7 @@ void Game::resetGame() {
     
     // Reset game state
     score_ = 0;
-    level_ = 1;
+    level_ = INITIAL_LEVEL;
     linesCleared_ = 0;
     gameOver_ = false;
     

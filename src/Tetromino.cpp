@@ -9,25 +9,25 @@
 // Kick table for J, L, S, T, Z pieces
 const std::vector<std::vector<std::pair<int, int>>> JLSTZ_KICKS = {
     // 0->1
-    {{0, 0}, {-1, 0}, {-1, -1}, {0, 2}, {-1, 2}},
+    {{0, 0}, {MOVE_LEFT, 0}, {MOVE_LEFT, MOVE_LEFT}, {0, HALF}, {MOVE_LEFT, HALF}},
     // 1->2
-    {{0, 0}, {1, 0}, {1, 1}, {0, -2}, {1, -2}},
+    {{0, 0}, {MOVE_RIGHT, 0}, {MOVE_RIGHT, MOVE_RIGHT}, {0, -HALF}, {MOVE_RIGHT, -HALF}},
     // 2->3
-    {{0, 0}, {1, 0}, {1, -1}, {0, 2}, {1, 2}},
+    {{0, 0}, {MOVE_RIGHT, 0}, {MOVE_RIGHT, MOVE_LEFT}, {0, HALF}, {MOVE_RIGHT, HALF}},
     // 3->0
-    {{0, 0}, {-1, 0}, {-1, 1}, {0, -2}, {-1, -2}}
+    {{0, 0}, {MOVE_LEFT, 0}, {MOVE_LEFT, MOVE_RIGHT}, {0, -HALF}, {MOVE_LEFT, -HALF}}
 };
 
 // Kick table for I piece
 const std::vector<std::vector<std::pair<int, int>>> I_KICKS = {
     // 0->1
-    {{0, 0}, {-2, 0}, {1, 0}, {-2, 1}, {1, -2}},
+    {{0, 0}, {-HALF, 0}, {MOVE_RIGHT, 0}, {-HALF, MOVE_RIGHT}, {MOVE_RIGHT, -HALF}},
     // 1->2
-    {{0, 0}, {-1, 0}, {2, 0}, {-1, -2}, {2, 1}},
+    {{0, 0}, {MOVE_LEFT, 0}, {HALF, 0}, {MOVE_LEFT, -HALF}, {HALF, MOVE_RIGHT}},
     // 2->3
-    {{0, 0}, {2, 0}, {-1, 0}, {2, -1}, {-1, 2}},
+    {{0, 0}, {HALF, 0}, {MOVE_LEFT, 0}, {HALF, MOVE_LEFT}, {MOVE_LEFT, HALF}},
     // 3->0
-    {{0, 0}, {1, 0}, {-2, 0}, {1, 2}, {-2, -1}}
+    {{0, 0}, {MOVE_RIGHT, 0}, {-HALF, 0}, {MOVE_RIGHT, HALF}, {-HALF, MOVE_LEFT}}
 };
 
 // No kicks for O piece since it's symmetric
@@ -43,7 +43,7 @@ bool Tetromino::isOccupying(int x, int y) const {
     int localX = x - x_;
     int localY = y - y_;
     
-    if (localX < 0 || localX >= 4 || localY < 0 || localY >= 4) {
+    if (localX < 0 || localX >= TETROMINO_GRID_SIZE || localY < 0 || localY >= TETROMINO_GRID_SIZE) {
         return false;
     }
 
@@ -51,18 +51,18 @@ bool Tetromino::isOccupying(int x, int y) const {
     return rotatedShape[localY][localX];
 }
 
-std::array<std::array<bool, 4>, 4> Tetromino::getRotatedShape() const {
+std::array<std::array<bool, TETROMINO_GRID_SIZE>, TETROMINO_GRID_SIZE> Tetromino::getRotatedShape() const {
     auto shape = SHAPES[static_cast<std::size_t>(type_)];
     
     // Apply rotation
-    std::array<std::array<bool, 4>, 4> rotatedShape = shape;
+    std::array<std::array<bool, TETROMINO_GRID_SIZE>, TETROMINO_GRID_SIZE> rotatedShape = shape;
     
     for (int r = 0; r < rotation_; r++) {
-        std::array<std::array<bool, 4>, 4> tempShape{};
+        std::array<std::array<bool, TETROMINO_GRID_SIZE>, TETROMINO_GRID_SIZE> tempShape{};
         
-        for (int y = 0; y < 4; y++) {
-            for (int x = 0; x < 4; x++) {
-                tempShape[x][3 - y] = rotatedShape[y][x];
+        for (int y = 0; y < TETROMINO_GRID_SIZE; y++) {
+            for (int x = 0; x < TETROMINO_GRID_SIZE; x++) {
+                tempShape[x][TETROMINO_GRID_MAX_INDEX - y] = rotatedShape[y][x];
             }
         }
         
@@ -75,13 +75,13 @@ std::array<std::array<bool, 4>, 4> Tetromino::getRotatedShape() const {
 bool Tetromino::isValidPosition(const Game& game, int newX, int newY, int newRotation) const {
     // Create a temporary tetromino with the new position and rotation
     Tetromino temp(type_, newX, newY);
-    temp.rotation_ = newRotation % 4;
+    temp.rotation_ = newRotation % TETROMINO_ROTATION_COUNT;
     
     // Check if the new position is valid
     auto rotatedShape = temp.getRotatedShape();
     
-    for (int y = 0; y < 4; y++) {
-        for (int x = 0; x < 4; x++) {
+    for (int y = 0; y < TETROMINO_GRID_SIZE; y++) {
+        for (int x = 0; x < TETROMINO_GRID_SIZE; x++) {
             if (rotatedShape[y][x]) {
                 if (!game.isPositionFree(newX + x, newY + y)) {
                     return false;
@@ -95,7 +95,7 @@ bool Tetromino::isValidPosition(const Game& game, int newX, int newY, int newRot
 
 void Tetromino::rotate(const Game& game) {
     int oldRotation = rotation_;
-    int newRotation = (rotation_ + 1) % 4;
+    int newRotation = (rotation_ + MOVE_RIGHT) % TETROMINO_ROTATION_COUNT;
     
     // Get the appropriate kick table based on tetromino type
     const std::vector<std::vector<std::pair<int, int>>>* kickTable;
@@ -123,10 +123,10 @@ void Tetromino::rotate(const Game& game) {
     // If we couldn't rotate, try a more aggressive approach with additional tests
     // This helps with pieces that get stuck on walls
     const std::array<std::pair<int, int>, 8> extraKicks = {{
-        {-2, 0}, {2, 0},   // farther left/right
-        {0, -2}, {0, 2},   // farther up/down
-        {-2, -1}, {2, -1}, // diagonal kicks
-        {-2, 1}, {2, 1}    // diagonal kicks
+        {-HALF, 0}, {HALF, 0},   // farther left/right
+        {0, -HALF}, {0, HALF},   // farther up/down
+        {-HALF, MOVE_LEFT}, {HALF, MOVE_LEFT}, // diagonal kicks
+        {-HALF, MOVE_RIGHT}, {HALF, MOVE_RIGHT}    // diagonal kicks
     }};
     
     for (const auto& [dx, dy] : extraKicks) {
@@ -142,19 +142,19 @@ void Tetromino::rotate(const Game& game) {
 }
 
 void Tetromino::moveLeft(const Game& game) {
-    if (isValidPosition(game, x_ - 1, y_, rotation_)) {
-        x_--;
+    if (isValidPosition(game, x_ + MOVE_LEFT, y_, rotation_)) {
+        x_ += MOVE_LEFT;
     }
 }
 
 void Tetromino::moveRight(const Game& game) {
-    if (isValidPosition(game, x_ + 1, y_, rotation_)) {
-        x_++;
+    if (isValidPosition(game, x_ + MOVE_RIGHT, y_, rotation_)) {
+        x_ += MOVE_RIGHT;
     }
 }
 
 void Tetromino::moveDown(const Game& game) {
-    if (isValidPosition(game, x_, y_ + 1, rotation_)) {
-        y_++;
+    if (isValidPosition(game, x_, y_ + MOVE_DOWN, rotation_)) {
+        y_ += MOVE_DOWN;
     }
 }

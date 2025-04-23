@@ -13,17 +13,13 @@ find_package(SDL2_ttf REQUIRED)
 # Include directories
 include_directories(${SDL2_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS} include)
 
-# Define source files with the correct filenames
+# Define source files - removed duplicate implementation files
 set(SOURCES
     src/main.cpp
     src/Game.cpp
-    src/GameInput.cpp
-    src/GameTetromino.cpp
-    src/GameRenderer.cpp
-    src/GameUI.cpp
-    src/GameGhostPiece.cpp
-    src/Color.cpp
+    src/Renderer.cpp
     src/Tetromino.cpp
+    src/Color.cpp
 )
 
 # Define header files
@@ -33,6 +29,7 @@ set(HEADERS
     include/TetrominoType.h
     include/Color.h
     include/Constants.h
+    include/Renderer.h
 )
 
 # Create executable
