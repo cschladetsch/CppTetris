@@ -83,8 +83,8 @@ Game::Game() :
 }
 
 Game::~Game() {
+    font_.release();
     TTF_Quit();
-    SDL_Quit();
 }
 
 int Game::run() {
