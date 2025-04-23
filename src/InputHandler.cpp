@@ -11,7 +11,7 @@ bool InputHandler::processEvents() {
     
     while (SDL_PollEvent(&e) != 0) {
         if (e.type == SDL_QUIT) {
-            return true; // Signal to quit
+            return true;
         } else if (e.type == SDL_KEYDOWN) {
             if (e.key.keysym.sym == SDLK_ESCAPE) {
                 // Handle ESC differently based on game state
@@ -39,7 +39,6 @@ bool InputHandler::processEvents() {
 }
 
 void InputHandler::handleKeyPress(SDL_Keycode key) {
-    // Route input handling based on game state
     switch (game_.getGameState()) {
         case GameState::StartScreen:
             handleStartScreenInput(key);
@@ -60,7 +59,6 @@ void InputHandler::handleKeyPress(SDL_Keycode key) {
 }
 
 void InputHandler::handleStartScreenInput(SDL_Keycode key) {
-    // Start game when Enter or Space is pressed
     if (key == SDLK_RETURN || key == SDLK_SPACE) {
         game_.startGame();
     }
@@ -95,14 +93,12 @@ void InputHandler::handlePlayingInput(SDL_Keycode key) {
 }
 
 void InputHandler::handlePausedInput(SDL_Keycode key) {
-    // Resume game with P or RETURN
     if (key == SDLK_p || key == SDLK_RETURN) {
         game_.pauseGame(); // Toggle pause state
     }
 }
 
 void InputHandler::handleGameOverInput(SDL_Keycode key) {
-    // Restart game with RETURN
     if (key == SDLK_RETURN) {
         game_.resetGame();
         game_.startGame();

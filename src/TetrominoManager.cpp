@@ -26,23 +26,18 @@ bool TetrominoManager::moveTetromino(int dx, int dy) {
     int newX = currentTetromino_->x() + dx;
     int newY = currentTetromino_->y() + dy;
     
-    // Create a test tetromino to check validity
     Tetromino testTetromino(currentTetromino_->type(), newX, newY);
     
-    // Apply the same rotation
     for (int i = 0; i < currentTetromino_->rotation(); i++) {
         testTetromino.rotateWithoutWallKick(); 
     }
     
-    // Check if the new position is valid
     if (!isValidPosition(testTetromino)) {
         return false;
     }
     
-    // Update position
     if (dx != NO_MOVE) {
         currentTetromino_->setPosition(newX, currentTetromino_->y());
-        // Play move sound if horizontal movement
         game_.playMoveSound();
     }
     if (dy != NO_MOVE) {
@@ -57,7 +52,6 @@ void TetrominoManager::rotateTetromino() {
         int oldRotation = currentTetromino_->rotation();
         currentTetromino_->rotate(game_);
         
-        // Play rotate sound if rotation was successful
         if (oldRotation != currentTetromino_->rotation()) {
             game_.playRotateSound();
         }
@@ -89,7 +83,6 @@ void TetrominoManager::hardDrop() {
         }
     }
     
-    // Play drop sound
     game_.playDropSound();
     
     lockTetromino();
@@ -148,7 +141,6 @@ void TetrominoManager::clearLines() {
     }
     
     if (linesCleared > 0) {
-        // Play line clear sound
         game_.playLineClearSound();
         
         calculateScoreAndUpdateLevel(linesCleared);
@@ -156,7 +148,6 @@ void TetrominoManager::clearLines() {
 }
 
 void TetrominoManager::calculateScoreAndUpdateLevel(int linesCleared) {
-    // Update score based on number of lines cleared
     static const std::array<int, 4> lineScores = {100, 300, 500, 800};
     int points = lineScores[std::min(linesCleared, TETROMINO_GRID_SIZE) - 1] * game_.getLevel();
     
@@ -165,21 +156,15 @@ void TetrominoManager::calculateScoreAndUpdateLevel(int linesCleared) {
 }
 
 bool TetrominoManager::createNewTetromino() {
-    // Use the next tetromino type that was previously generated
     TetrominoType type = nextTetrominoType_;
     
-    // Generate new next tetromino type
     generateNextTetrominoType();
     
-    // Initial position - centered at the top with an offset for the I piece
     int startX = GRID_WIDTH / HALF - HALF;
-    // Start higher for I piece to give more space
     int startY = (type == TetrominoType::I) ? MOVE_LEFT : NO_MOVE;
     
-    // Create the new tetromino
     currentTetromino_ = std::make_unique<Tetromino>(type, startX, startY);
     
-    // Check if the new tetromino can be placed
     if (!canPlaceNewTetromino()) {
         return false;  // Game over
     }

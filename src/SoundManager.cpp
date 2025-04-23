@@ -6,7 +6,6 @@ SoundManager::SoundManager()
 }
 
 SoundManager::~SoundManager() {
-    // Clean up mixer before exit
     if (initialized_) {
         Mix_CloseAudio();
         Mix_Quit();
@@ -14,10 +13,8 @@ SoundManager::~SoundManager() {
 }
 
 bool SoundManager::initialize() {
-    // Force SDL to use PulseAudio
     SDL_setenv("SDL_AUDIODRIVER", "pulseaudio", 1);
     
-    // Initialize SDL_mixer
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
         std::cerr << "SDL_mixer could not initialize! SDL_mixer Error: " << Mix_GetError() << std::endl;
         return false;
@@ -25,7 +22,6 @@ bool SoundManager::initialize() {
     
     initialized_ = true;
     
-    // Set initial volume
     Mix_Volume(-1, volume_);
     
     return true;
@@ -36,7 +32,6 @@ bool SoundManager::loadSounds() {
         return false;
     }
     
-    // Load all the sound effects
     bool success = true;
     success &= loadSound(SoundEffect::Move, "resources/sounds/move.wav");
     success &= loadSound(SoundEffect::Rotate, "resources/sounds/rotate.wav");
@@ -73,13 +68,11 @@ void SoundManager::playSound(SoundEffect effect) {
 }
 
 void SoundManager::setVolume(int volume) {
-    // Convert from 0-100 range to 0-128 range (SDL_mixer volume range)
     volume_ = (volume * MIX_MAX_VOLUME) / 100;
     
     if (volume_ < 0) volume_ = 0;
     if (volume_ > MIX_MAX_VOLUME) volume_ = MIX_MAX_VOLUME;
     
-    // Set volume for all channels
     Mix_Volume(-1, volume_);
 }
 
@@ -87,10 +80,8 @@ void SoundManager::toggleMute() {
     muted_ = !muted_;
     
     if (muted_) {
-        // Store the current volume and set to 0
         Mix_Volume(-1, 0);
     } else {
-        // Restore the previous volume
         Mix_Volume(-1, volume_);
     }
 }

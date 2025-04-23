@@ -1,6 +1,6 @@
 #include "Renderer.h"
 #include "Game.h"
-#include "Color.h"  // Added Color.h header for COLORS array
+#include "Color.h"
 #include <format>
 #include <algorithm>
 
@@ -22,7 +22,6 @@ void Renderer::drawGrid(const std::vector<std::vector<std::optional<TetrominoTyp
     rect.w = BLOCK_SIZE - BLOCK_BORDER_THICKNESS;
     rect.h = BLOCK_SIZE - BLOCK_BORDER_THICKNESS;
     
-    // Draw outline
     SDL_SetRenderDrawColor(renderer_, GRID_LINE_COLOR, GRID_LINE_COLOR, GRID_LINE_COLOR, ALPHA_OPAQUE);
     SDL_Rect border = {0, 0, GRID_WIDTH * BLOCK_SIZE, GRID_HEIGHT * BLOCK_SIZE};
     SDL_RenderDrawRect(renderer_, &border);
@@ -173,28 +172,22 @@ void Renderer::drawSidebar(const Game& game, TetrominoType nextTetrominoType) {
     int sidebarX = GRID_WIDTH * BLOCK_SIZE + SIDEBAR_PADDING;
     int y = UI_PADDING_MEDIUM;
     
-    // Draw "Next" label
     drawText("Next:", sidebarX, y);
     y += UI_PADDING_LARGE;
     
-    // Draw next tetromino preview
     drawNextTetromino(nextTetrominoType, sidebarX + BLOCK_SIZE, y);
     
     y += TETROMINO_GRID_SIZE * BLOCK_SIZE + UI_PADDING_MEDIUM;
     
-    // Draw score
     drawText(std::format("Score: {}", game.getScore()), sidebarX, y);
     y += UI_PADDING_XLARGE;
     
-    // Draw level
     drawText(std::format("Level: {}", game.getLevel()), sidebarX, y);
     y += UI_PADDING_XLARGE;
     
-    // Draw lines cleared
     drawText(std::format("Lines: {}", game.getLinesCleared()), sidebarX, y);
     y += UI_PADDING_XXLARGE;
     
-    // Draw controls with Unicode arrows
     drawText("Controls:", sidebarX, y);
     y += UI_PADDING_LARGE;
     drawText("\u2190 \u2192 : Move", sidebarX, y);  // Unicode LEFT/RIGHT ARROW
@@ -207,15 +200,12 @@ void Renderer::drawSidebar(const Game& game, TetrominoType nextTetrominoType) {
 }
 
 void Renderer::drawNextTetromino(TetrominoType type, int x, int y) {
-    // Create a temporary tetromino for the preview
     Tetromino nextTetromino(type, 0, 0);
     
-    // Calculate the center of the preview area
     int previewSize = TETROMINO_GRID_SIZE * BLOCK_SIZE;
     int centerX = x + previewSize / HALF;
     int centerY = y + previewSize / HALF;
     
-    // Draw the tetromino blocks
     SDL_Rect rect;
     rect.w = BLOCK_SIZE - BLOCK_BORDER_THICKNESS;
     rect.h = BLOCK_SIZE - BLOCK_BORDER_THICKNESS;
@@ -223,14 +213,11 @@ void Renderer::drawNextTetromino(TetrominoType type, int x, int y) {
     const auto& color = COLORS[static_cast<std::size_t>(type)];
     SDL_SetRenderDrawColor(renderer_, color.r, color.g, color.b, ALPHA_OPAQUE);
     
-    // Draw the tetromino centered in the preview area
     auto shape = nextTetromino.getRotatedShape();
     
-    // Calculate offsets to center the tetromino
     int offsetX = 0;
     int offsetY = 0;
     
-    // Count rows and columns that have blocks
     int minRow = TETROMINO_GRID_SIZE, maxRow = -1, minCol = TETROMINO_GRID_SIZE, maxCol = -1;
     for (int row = 0; row < TETROMINO_GRID_SIZE; row++) {
         for (int col = 0; col < TETROMINO_GRID_SIZE; col++) {
@@ -309,16 +296,13 @@ void Renderer::drawText(const std::string& text, int x, int y) {
 
 void Renderer::drawLargeText(const std::string& text, int x, int y) {
     if (font_) {
-        // Save the current font size
         int originalSize = TTF_FontHeight(font_);
         
-        // Create a new font with a larger size (1.5x)
         TTF_Font* largeFont = TTF_OpenFont(TTF_FontFaceFamilyName(font_), originalSize * 2);
         
         if (largeFont) {
             SDL_Color textColor = {255, 255, 255, 255}; // Bright white for large text
             
-            // Render with the larger font
             SDL_Surface* surface = TTF_RenderUTF8_Blended(largeFont, text.c_str(), textColor);
             
             if (surface) {
@@ -353,7 +337,6 @@ void Renderer::drawLargeText(const std::string& text, int x, int y) {
             }
         }
     } else {
-        // Fallback if font loading failed: draw a colored rectangle
         SDL_SetRenderDrawColor(renderer_, 255, 255, 255, 255);
         SDL_Rect rect = {x, y, static_cast<int>(text.length() * 16), 40}; // Larger size
         SDL_RenderDrawRect(renderer_, &rect);

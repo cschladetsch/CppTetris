@@ -15,7 +15,6 @@ Game::Game() :
     
     initSDL();
     
-    // Initialize sound system
     soundManager_ = std::make_unique<SoundManager>();
     if (!soundManager_->initialize()) {
         std::cerr << "Warning: Sound system could not be initialized. Continuing without sound." << std::endl;
@@ -28,31 +27,25 @@ Game::Game() :
     inputHandler_ = std::make_unique<InputHandler>(*this, *tetrominoManager_);
     gameRenderer_ = std::make_unique<GameRenderer>(*this, *tetrominoManager_, renderer_.get(), font_.get());
     
-    // Initialize the game grid
     resetGame();
 }
 
 Game::~Game() {
-    // SoundManager cleans up sound resources in its destructor
-    
     TTF_Quit();
     SDL_Quit();
 }
 
 void Game::initSDL() {
-    // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
         exit(EXIT_FAILURE);
     }
 
-    // Initialize TTF
     if (TTF_Init() < 0) {
         std::cerr << "SDL_ttf could not initialize! TTF_Error: " << TTF_GetError() << std::endl;
         exit(EXIT_FAILURE);
     }
 
-    // Create window
     window_.reset(SDL_CreateWindow("Tetris C++23", 
                                    SDL_WINDOWPOS_UNDEFINED, 
                                    SDL_WINDOWPOS_UNDEFINED, 
@@ -64,14 +57,12 @@ void Game::initSDL() {
         exit(EXIT_FAILURE);
     }
 
-    // Create renderer
     renderer_.reset(SDL_CreateRenderer(window_.get(), -1, SDL_RENDERER_ACCELERATED));
     if (!renderer_) {
         std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
         exit(EXIT_FAILURE);
     }
 
-    // Try to load font from multiple possible locations
     loadFont();
 }
 
@@ -104,18 +95,14 @@ void Game::run() {
     while (!quit_) {
         auto currentTime = std::chrono::steady_clock::now();
         
-        // Process input
         quit_ = inputHandler_->processEvents();
         
-        // Update game state
         if (gameState_ == GameState::Playing) {
             updateGameState(currentTime, lastFallTime);
         }
         
-        // Render
         gameRenderer_->render();
         
-        // Cap frame rate
         capFrameRate(lastFrameTime);
     }
 }
@@ -189,6 +176,4 @@ void Game::resetGame() {
     
     // Create new tetromino
     tetrominoManager_->createNewTetromino();
-    
-    // Note: we don't change gameState_ here to allow calling from constructor
 }
