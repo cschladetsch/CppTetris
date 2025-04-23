@@ -2,7 +2,7 @@
 #include <iostream>
 #include <exception>
 
-int main(int , char*[] ) {
+int main(int  /*unused*/, char* /*unused*/[] ) {
     try {
         return Game().run();
     } catch (const std::exception& e) {

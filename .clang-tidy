@@ -1,0 +1,6 @@
+Checks: 'bugprone-*,performance-*,readability-*,-bugprone-easily-swappable-parameters'
+CheckOptions:
+  - key: readability-identifier-length.IgnoredVariableNames
+    value: 'r|x|y|z'
+  - key: readability-identifier-length.IgnoredParameterNames
+    value: 'r|x|y|z'
