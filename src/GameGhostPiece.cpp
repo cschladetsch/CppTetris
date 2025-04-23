@@ -1,10 +1,10 @@
-// src/GameGhostPiece.cpp
 #include "Game.h"
 #include "Color.h"
 #include <algorithm>
 
 void Game::drawGhostPiece() {
-    if (!currentTetromino_) return;
+    if (!currentTetromino_) { return;
+}
     
     // Create a manual copy of the current tetromino position and rotation
     int ghostX = currentTetromino_->x();

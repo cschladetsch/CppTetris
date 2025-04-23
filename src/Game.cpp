@@ -16,13 +16,13 @@ Game::Game() :
     
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+        std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << '\n';
         exit(EXIT_FAILURE);
     }
 
     // Initialize TTF
     if (TTF_Init() < 0) {
-        std::cerr << "SDL_ttf could not initialize! TTF_Error: " << TTF_GetError() << std::endl;
+        std::cerr << "SDL_ttf could not initialize! TTF_Error: " << TTF_GetError() << '\n';
         exit(EXIT_FAILURE);
     }
 
@@ -34,14 +34,14 @@ Game::Game() :
                                    WINDOW_HEIGHT, 
                                    SDL_WINDOW_SHOWN));
     if (!window_) {
-        std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << '\n';
         exit(EXIT_FAILURE);
     }
 
     // Create renderer
     renderer_.reset(SDL_CreateRenderer(window_.get(), -1, SDL_RENDERER_ACCELERATED));
     if (!renderer_) {
-        std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << '\n';
         exit(EXIT_FAILURE);
     }
 
@@ -66,8 +66,8 @@ Game::Game() :
         font_.reset(TTF_OpenFont("Arial.ttf", 24));
     }
     if (!font_) {
-        std::cerr << "Failed to load font! TTF_Error: " << TTF_GetError() << std::endl;
-        std::cerr << "Will continue without font - using blocks for score display." << std::endl;
+        std::cerr << "Failed to load font! TTF_Error: " << TTF_GetError() << '\n';
+        std::cerr << "Will continue without font - using blocks for score display." << '\n';
     }
 
     // Seed random generator

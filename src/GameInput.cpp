@@ -1,4 +1,3 @@
-// src/GameInput.cpp
 #include "Game.h"
 
 void Game::handleKeyPress(SDL_Keycode key) {
@@ -47,10 +46,10 @@ void Game::handleKeyPress(SDL_Keycode key) {
         }
     }
 }
-#include "Game.h"
 
 bool Game::moveTetromino(int dx, int dy) {
-    if (!currentTetromino_) return false;
+    if (!currentTetromino_) { return false;
+}
     
     int newX = currentTetromino_->x() + dx;
     int newY = currentTetromino_->y() + dy;
