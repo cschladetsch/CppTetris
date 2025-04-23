@@ -14,12 +14,18 @@ bool InputHandler::processEvents() {
             return true; // Signal to quit
         } else if (e.type == SDL_KEYDOWN) {
             if (e.key.keysym.sym == SDLK_ESCAPE) {
-                // ESC behaves differently based on game state
-                if (game_.getGameState() == GameState::Playing || 
-                    game_.getGameState() == GameState::Paused) {
-                    game_.pauseGame(); // Toggle pause
-                } else {
-                    return true; // Quit on other states
+                // Handle ESC differently based on game state
+                GameState state = game_.getGameState();
+                
+                if (state == GameState::StartScreen || state == GameState::GameOver) {
+                    // When in start screen or game over, ESC quits the game
+                    return true; 
+                } else if (state == GameState::Playing) {
+                    // When playing, ESC pauses the game
+                    game_.pauseGame();
+                } else if (state == GameState::Paused) {
+                    // When already paused, ESC quits the game
+                    return true;
                 }
             } else if (e.key.keysym.sym == SDLK_m) {
                 game_.toggleSoundMute(); // Toggle mute with M key
@@ -54,7 +60,7 @@ void InputHandler::handleKeyPress(SDL_Keycode key) {
 }
 
 void InputHandler::handleStartScreenInput(SDL_Keycode key) {
-    // Start game when any key is pressed (except ESC which is handled separately)
+    // Start game when Enter or Space is pressed
     if (key == SDLK_RETURN || key == SDLK_SPACE) {
         game_.startGame();
     }
