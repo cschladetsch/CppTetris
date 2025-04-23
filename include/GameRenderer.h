@@ -5,6 +5,7 @@
 #include <memory>
 #include "Constants.h"
 #include "Renderer.h"
+#include "GameState.h"
 
 class Game;
 class TetrominoManager;
@@ -23,7 +24,8 @@ private:
     std::unique_ptr<Renderer> renderer_;
     
     // Helper rendering methods
+    void renderStartScreen();
     void renderGame();
+    void renderPauseScreen();
     void renderGameOver();
 };
-// GameRenderer.h

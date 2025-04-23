@@ -307,6 +307,59 @@ void Renderer::drawText(const std::string& text, int x, int y) {
     }
 }
 
+void Renderer::drawLargeText(const std::string& text, int x, int y) {
+    if (font_) {
+        // Save the current font size
+        int originalSize = TTF_FontHeight(font_);
+        
+        // Create a new font with a larger size (1.5x)
+        TTF_Font* largeFont = TTF_OpenFont(TTF_FontFaceFamilyName(font_), originalSize * 2);
+        
+        if (largeFont) {
+            SDL_Color textColor = {255, 255, 255, 255}; // Bright white for large text
+            
+            // Render with the larger font
+            SDL_Surface* surface = TTF_RenderUTF8_Blended(largeFont, text.c_str(), textColor);
+            
+            if (surface) {
+                SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, surface);
+                
+                if (texture) {
+                    SDL_Rect rect = {x, y, surface->w, surface->h};
+                    SDL_RenderCopy(renderer_, texture, nullptr, &rect);
+                    SDL_DestroyTexture(texture);
+                }
+                
+                SDL_FreeSurface(surface);
+            }
+            
+            TTF_CloseFont(largeFont);
+        } else {
+            // Fall back to regular size if large font creation fails
+            SDL_Color textColor = {255, 255, 255, 255}; // White for emphasis
+            
+            SDL_Surface* surface = TTF_RenderUTF8_Blended(font_, text.c_str(), textColor);
+            
+            if (surface) {
+                SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, surface);
+                
+                if (texture) {
+                    SDL_Rect rect = {x, y, surface->w, surface->h};
+                    SDL_RenderCopy(renderer_, texture, nullptr, &rect);
+                    SDL_DestroyTexture(texture);
+                }
+                
+                SDL_FreeSurface(surface);
+            }
+        }
+    } else {
+        // Fallback if font loading failed: draw a colored rectangle
+        SDL_SetRenderDrawColor(renderer_, 255, 255, 255, 255);
+        SDL_Rect rect = {x, y, static_cast<int>(text.length() * 16), 40}; // Larger size
+        SDL_RenderDrawRect(renderer_, &rect);
+    }
+}
+
 void Renderer::drawGameOver(int score) {
     SDL_SetRenderDrawColor(renderer_, OVERLAY_COLOR_R, OVERLAY_COLOR_G, 
                           OVERLAY_COLOR_B, OVERLAY_COLOR_A);

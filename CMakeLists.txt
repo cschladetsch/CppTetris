@@ -9,9 +9,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Find required packages
 find_package(SDL2 REQUIRED)
 find_package(SDL2_ttf REQUIRED)
+find_package(SDL2_mixer REQUIRED)
 
 # Include directories
-include_directories(${SDL2_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS} include)
+include_directories(${SDL2_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS} ${SDL2_MIXER_INCLUDE_DIRS} include)
 
 # Use file globs to automatically find all source and header files
 file(GLOB SOURCES src/*.cpp)
@@ -21,7 +22,7 @@ file(GLOB HEADERS include/*.h)
 add_executable(tetris ${SOURCES} ${HEADERS})
 
 # Link libraries
-target_link_libraries(tetris ${SDL2_LIBRARIES} SDL2_ttf)
+target_link_libraries(tetris ${SDL2_LIBRARIES} SDL2_ttf SDL2_mixer)
 
 # Check if resources directory exists before copying
 if(EXISTS ${CMAKE_SOURCE_DIR}/resources)
@@ -29,6 +30,7 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/resources)
 else()
     # Create resources structure if it doesn't exist
     file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/resources/fonts)
+    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/resources/sounds)
     
     # Copy system fonts to resources directory if available
     if(EXISTS "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
@@ -43,6 +45,8 @@ else()
         message(STATUS "Resources directory was not found. Created empty resources structure.")
         message(STATUS "Please place a Unicode-compatible font in resources/fonts/ directory.")
     endif()
+    
+    message(STATUS "Created sounds directory. Place sound files in resources/sounds/ directory.")
 endif()
 
 # Install the executable

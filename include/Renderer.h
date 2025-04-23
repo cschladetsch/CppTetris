@@ -25,10 +25,13 @@ public:
     void drawSidebar(const Game& game, TetrominoType nextTetrominoType);
     void drawNextTetromino(TetrominoType type, int x, int y);
     void drawText(const std::string& text, int x, int y);
+    void drawLargeText(const std::string& text, int x, int y);
     void drawGameOver(int score);
+    
+    // Accessor for the renderer (used for direct drawing in some cases)
+    SDL_Renderer* getRenderer() const { return renderer_; }
     
 private:
     SDL_Renderer* renderer_; // Non-owning pointer
     TTF_Font* font_;         // Non-owning pointer
 };
-// Renderer.h

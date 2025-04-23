@@ -14,9 +14,18 @@ bool InputHandler::processEvents() {
             return true; // Signal to quit
         } else if (e.type == SDL_KEYDOWN) {
             if (e.key.keysym.sym == SDLK_ESCAPE) {
-                return true; // Quit on Escape key
+                // ESC behaves differently based on game state
+                if (game_.getGameState() == GameState::Playing || 
+                    game_.getGameState() == GameState::Paused) {
+                    game_.pauseGame(); // Toggle pause
+                } else {
+                    return true; // Quit on other states
+                }
+            } else if (e.key.keysym.sym == SDLK_m) {
+                game_.toggleSoundMute(); // Toggle mute with M key
+            } else {
+                handleKeyPress(e.key.keysym.sym);
             }
-            handleKeyPress(e.key.keysym.sym);
         }
     }
     
@@ -24,15 +33,34 @@ bool InputHandler::processEvents() {
 }
 
 void InputHandler::handleKeyPress(SDL_Keycode key) {
-    // Handle game over state
-    if (game_.isGameOver()) {
-        if (key == SDLK_RETURN) {
-            game_.resetGame();
-        }
-        return;
+    // Route input handling based on game state
+    switch (game_.getGameState()) {
+        case GameState::StartScreen:
+            handleStartScreenInput(key);
+            break;
+            
+        case GameState::Playing:
+            handlePlayingInput(key);
+            break;
+            
+        case GameState::Paused:
+            handlePausedInput(key);
+            break;
+            
+        case GameState::GameOver:
+            handleGameOverInput(key);
+            break;
     }
-    
-    // Handle active game state
+}
+
+void InputHandler::handleStartScreenInput(SDL_Keycode key) {
+    // Start game when any key is pressed (except ESC which is handled separately)
+    if (key == SDLK_RETURN || key == SDLK_SPACE) {
+        game_.startGame();
+    }
+}
+
+void InputHandler::handlePlayingInput(SDL_Keycode key) {
     switch (key) {
         case SDLK_LEFT:
             tetrominoManager_.moveTetromino(MOVE_LEFT, NO_MOVE);
@@ -53,5 +81,24 @@ void InputHandler::handleKeyPress(SDL_Keycode key) {
         case SDLK_SPACE:
             tetrominoManager_.hardDrop();
             break;
+            
+        case SDLK_p:
+            game_.pauseGame();
+            break;
+    }
+}
+
+void InputHandler::handlePausedInput(SDL_Keycode key) {
+    // Resume game with P or RETURN
+    if (key == SDLK_p || key == SDLK_RETURN) {
+        game_.pauseGame(); // Toggle pause state
+    }
+}
+
+void InputHandler::handleGameOverInput(SDL_Keycode key) {
+    // Restart game with RETURN
+    if (key == SDLK_RETURN) {
+        game_.resetGame();
+        game_.startGame();
     }
 }

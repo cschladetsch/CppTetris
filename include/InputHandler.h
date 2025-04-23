@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL.h>
 #include <memory>
+#include "GameState.h"
 
 class Game;
 class TetrominoManager;
@@ -20,5 +21,8 @@ private:
     
     // Input processing
     void handleKeyPress(SDL_Keycode key);
+    void handleStartScreenInput(SDL_Keycode key);
+    void handlePlayingInput(SDL_Keycode key);
+    void handlePausedInput(SDL_Keycode key);
+    void handleGameOverInput(SDL_Keycode key);
 };
-// InputHandler.h

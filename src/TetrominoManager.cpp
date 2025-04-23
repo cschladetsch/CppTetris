@@ -42,6 +42,8 @@ bool TetrominoManager::moveTetromino(int dx, int dy) {
     // Update position
     if (dx != NO_MOVE) {
         currentTetromino_->setPosition(newX, currentTetromino_->y());
+        // Play move sound if horizontal movement
+        game_.playMoveSound();
     }
     if (dy != NO_MOVE) {
         currentTetromino_->setPosition(currentTetromino_->x(), newY);
@@ -52,7 +54,13 @@ bool TetrominoManager::moveTetromino(int dx, int dy) {
 
 void TetrominoManager::rotateTetromino() {
     if (currentTetromino_) {
+        int oldRotation = currentTetromino_->rotation();
         currentTetromino_->rotate(game_);
+        
+        // Play rotate sound if rotation was successful
+        if (oldRotation != currentTetromino_->rotation()) {
+            game_.playRotateSound();
+        }
     }
 }
 
@@ -80,6 +88,9 @@ void TetrominoManager::hardDrop() {
             break;
         }
     }
+    
+    // Play drop sound
+    game_.playDropSound();
     
     lockTetromino();
     clearLines();
@@ -137,6 +148,9 @@ void TetrominoManager::clearLines() {
     }
     
     if (linesCleared > 0) {
+        // Play line clear sound
+        game_.playLineClearSound();
+        
         calculateScoreAndUpdateLevel(linesCleared);
     }
 }
@@ -206,4 +220,3 @@ bool TetrominoManager::isValidPosition(const Tetromino& tetromino) const {
     }
     return true;
 }
-// TetrominoManager.cpp
