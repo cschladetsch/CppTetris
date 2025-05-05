@@ -75,6 +75,7 @@ Release\tetris.exe
 The project uses a modular architecture with functionality separated into specialized files:
 
 ❯ tree -I build
+```
 .
 ├── CMakeLists.txt
 ├── LICENSE
@@ -118,6 +119,7 @@ The project uses a modular architecture with functionality separated into specia
 ├── tidy
 ├── tidy.sh
 └── wsl-sound.sh
+```
 
 ## Acknowledgments
 
