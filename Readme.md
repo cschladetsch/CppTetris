@@ -74,14 +74,50 @@ Release\tetris.exe
 
 The project uses a modular architecture with functionality separated into specialized files:
 
-- `Game.cpp`: Core game initialization and main loop
-- `GameInput.cpp`: Handles keyboard input and tetromino movement
-- `GameTetromino.cpp`: Manages tetromino creation, locking, and line clearing
-- `GameRenderer.cpp`: Core rendering functions
-- `GameUI.cpp`: UI elements like sidebar and next piece preview
-- `GameGhostPiece.cpp`: Ghost piece projection logic
-- `Tetromino.cpp`: Tetromino behavior and rotation
-- `Color.cpp`: Color definitions for tetrominoes
+❯ tree -I build
+.
+├── CMakeLists.txt
+├── LICENSE
+├── Readme.md
+├── compile_commands.json
+├── download-sounds.sh
+├── include
+│   ├── Color.h
+│   ├── Constants.h
+│   ├── Game.h
+│   ├── GameRenderer.h
+│   ├── GameState.h
+│   ├── InputHandler.h
+│   ├── Renderer.h
+│   ├── SoundManager.h
+│   ├── Tetromino.h
+│   ├── TetrominoManager.h
+│   └── TetrominoType.h
+├── r
+├── resources
+│   ├── Tetris.gif
+│   ├── fonts
+│   │   └── Arial.ttf
+│   └── sounds
+│       ├── clear.wav
+│       ├── drop.wav
+│       ├── gameover.wav
+│       ├── levelup.wav
+│       └── rotate.wav
+├── setup-audio.sh
+├── src
+│   ├── Color.cpp
+│   ├── Game.cpp
+│   ├── GameRenderer.cpp
+│   ├── InputHandler.cpp
+│   ├── Renderer.cpp
+│   ├── SoundManager.cpp
+│   ├── Tetromino.cpp
+│   ├── TetrominoManager.cpp
+│   └── main.cpp
+├── tidy
+├── tidy.sh
+└── wsl-sound.sh
 
 ## Acknowledgments
 
