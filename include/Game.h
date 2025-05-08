@@ -34,10 +34,11 @@ public:
     // Game state modifiers
     virtual void startGame() { gameState_ = GameState::Playing; }
     virtual void pauseGame() { 
-        if (gameState_ == GameState::Playing) 
+        if (gameState_ == GameState::Playing) { 
             gameState_ = GameState::Paused; 
-        else if (gameState_ == GameState::Paused)
+        } else if (gameState_ == GameState::Paused) {
             gameState_ = GameState::Playing;
+}
     }
     virtual void resetGame();
     virtual void setGameOver() { 
