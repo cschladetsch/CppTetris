@@ -3,15 +3,19 @@
 #include <algorithm>
 
 Game::Game(bool test_mode) : 
-    window_(nullptr, SDL_DestroyWindow),
-    renderer_(nullptr, SDL_DestroyRenderer),
-    font_(nullptr, TTF_CloseFont),
+    tetrominoManager_(nullptr),
+    inputHandler_(nullptr),
+    gameRenderer_(nullptr),
+    soundManager_(nullptr),
     grid_(GRID_HEIGHT, std::vector<std::optional<TetrominoType>>(GRID_WIDTH)),
     gameState_(GameState::StartScreen),  // Start with the start screen
     quit_(false),
     score_(0),
     level_(INITIAL_LEVEL),
-    linesCleared_(0) {
+    linesCleared_(0),
+    window_(nullptr, SDL_DestroyWindow),
+    renderer_(nullptr, SDL_DestroyRenderer),
+    font_(nullptr, TTF_CloseFont) {
     
     if (!test_mode) {
         initSDL();

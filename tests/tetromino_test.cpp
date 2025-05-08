@@ -111,9 +111,9 @@ TEST_F(TetrominoTest, RotationChangesShape) {
     // Initial orientation (horizontal)
     // I piece is in row 1 (indexes 0-3) in its default orientation
     EXPECT_FALSE(tetromino.isOccupying(5, 9));  // Row above middle
-    EXPECT_FALSE(tetromino.isOccupying(5, 11)); // Row below middle
+    EXPECT_TRUE(tetromino.isOccupying(5, 11));  // Check middle row where I piece is
     
-    // Check horizontal piece (should be present in row 10)
+    // Check horizontal piece (should be present in row 11)
     for (int x = 5; x <= 8; x++) {
         EXPECT_TRUE(tetromino.isOccupying(x, 11));
     }
