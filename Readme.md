@@ -30,14 +30,42 @@ A modern implementation of the classic Tetris game using C++23 and SDL2.
 
 ## Building from Source
 
-### Linux/macOS
+### Using Makefile (Recommended)
+
+The project includes a simple Makefile for common operations:
 
 ```bash
 # Install dependencies (Ubuntu/Debian example)
-sudo apt install build-essential cmake libsdl2-dev libsdl2-ttf-dev
+sudo apt install build-essential cmake libsdl2-dev libsdl2-ttf-dev libsdl2-mixer-dev
 
 # Clone this repository
-git clone https://github.com/cschladetsch/CppTetris.git
+git clone https://github.com/yourusername/CppTetris.git
+cd CppTetris
+
+# Build the project
+make build
+
+# Run the game
+make game
+
+# Run the tests
+make test
+
+# Run tests with simplified output (no SDL errors)
+make test-mock
+
+# Clean build artifacts
+make clean
+```
+
+### Manual Build (Linux/macOS)
+
+```bash
+# Install dependencies (Ubuntu/Debian example)
+sudo apt install build-essential cmake libsdl2-dev libsdl2-ttf-dev libsdl2-mixer-dev
+
+# Clone this repository
+git clone https://github.com/yourusername/CppTetris.git
 cd CppTetris
 
 # Create build directory
@@ -45,7 +73,7 @@ mkdir build && cd build
 
 # Configure and build
 cmake ..
-make
+cmake --build .
 
 # Run the game
 ./tetris
@@ -74,59 +102,92 @@ Release\tetris.exe
 
 The project uses a modular architecture with functionality separated into specialized files:
 
-❯ tree -I build
 ```
 .
-├── CMakeLists.txt
+├── CMakeLists.txt         # Main CMake configuration
 ├── LICENSE
+├── Makefile               # Simple Makefile for common operations
 ├── Readme.md
-├── compile_commands.json
-├── download-sounds.sh
-├── include
-│   ├── Color.h
-│   ├── Constants.h
-│   ├── Game.h
-│   ├── GameRenderer.h
-│   ├── GameState.h
-│   ├── InputHandler.h
-│   ├── Renderer.h
-│   ├── SoundManager.h
-│   ├── Tetromino.h
-│   ├── TetrominoManager.h
-│   └── TetrominoType.h
-├── r
-├── resources
-│   ├── Tetris.gif
-│   ├── fonts
-│   │   └── Arial.ttf
-│   └── sounds
-│       ├── clear.wav
-│       ├── drop.wav
-│       ├── gameover.wav
-│       ├── levelup.wav
-│       └── rotate.wav
-├── setup-audio.sh
-├── src
-│   ├── Color.cpp
-│   ├── Game.cpp
-│   ├── GameRenderer.cpp
-│   ├── InputHandler.cpp
-│   ├── Renderer.cpp
-│   ├── SoundManager.cpp
-│   ├── Tetromino.cpp
-│   ├── TetrominoManager.cpp
-│   └── main.cpp
-├── tidy
+├── download-sounds.sh     # Helper script to download sound effects
+├── include/               # Header files
+│   ├── Color.h
+│   ├── Constants.h        # Game constants and configuration
+│   ├── Game.h             # Main game class
+│   ├── GameRenderer.h
+│   ├── GameState.h
+│   ├── InputHandler.h     # Handles SDL events
+│   ├── Renderer.h
+│   ├── SoundManager.h
+│   ├── Tetromino.h        # Tetromino logic
+│   ├── TetrominoManager.h # Manages active and next tetrominos
+│   └── TetrominoType.h    # Defines tetromino shapes
+├── resources/             # Game resources
+│   ├── Tetris.gif
+│   ├── fonts/
+│   │   └── Arial.ttf
+│   └── sounds/
+│       ├── clear.wav
+│       ├── drop.wav
+│       ├── gameover.wav
+│       ├── levelup.wav
+│       └── rotate.wav
+├── run_tests.sh           # Script for running all tests
+├── setup-audio.sh         # Script for setting up audio on Linux
+├── src/                   # Source files
+│   ├── Color.cpp
+│   ├── Game.cpp           # Main game implementation
+│   ├── GameRenderer.cpp
+│   ├── InputHandler.cpp
+│   ├── Renderer.cpp
+│   ├── SoundManager.cpp
+│   ├── Tetromino.cpp
+│   ├── TetrominoManager.cpp
+│   └── main.cpp
+├── tests/                 # Test files using Google Test
+│   ├── CMakeLists.txt
+│   ├── game_test.cpp
+│   ├── grid_collision_test.cpp
+│   ├── run_mock_tests.sh
+│   ├── test_helpers.h
+│   ├── tetromino_manager_test.cpp
+│   └── tetromino_test.cpp
+├── tidy                   # Scripts for code tidying
 ├── tidy.sh
-└── wsl-sound.sh
+└── wsl-sound.sh           # Script for WSL audio setup
 ```
+
+## Testing
+
+The project includes a comprehensive test suite using Google Test. Tests cover:
+
+- Tetromino behavior, rotation, and collisions
+- Game state management and transitions
+- Grid operations and collision detection
+- TetrominoManager functionality for piece placement and line clearing
+
+To run the tests:
+
+```bash
+# Run all tests with default CTest output
+make test
+
+# Run tests with simplified output (suppresses SDL errors)
+make test-mock
+```
+
+The test suite is organized into several test files:
+
+- `tetromino_test.cpp`: Tests for basic tetromino functionality
+- `tetromino_manager_test.cpp`: Tests for tetromino management and scoring
+- `game_test.cpp`: Tests for game state and core game functionality
+- `grid_collision_test.cpp`: Tests specifically for grid boundaries and collisions
 
 ## Acknowledgments
 
 - Original Tetris game created by Alexey Pajitnov
 - SDL2 developers for the excellent graphics library
+- Google Test developers for the testing framework
 
 ## License
 
 MIT
-
