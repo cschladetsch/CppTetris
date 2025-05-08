@@ -18,22 +18,22 @@ enum class SoundEffect {
 class SoundManager {
 public:
     SoundManager();
-    ~SoundManager();
+    virtual ~SoundManager();
 
     // Initialize the audio system
-    bool initialize();
+    virtual bool initialize();
     
     // Load sounds from files
-    bool loadSounds();
+    virtual bool loadSounds();
     
     // Play a specific sound effect
-    void playSound(SoundEffect effect);
+    virtual void playSound(SoundEffect effect);
     
     // Set sound volume (0-100)
-    void setVolume(int volume);
+    virtual void setVolume(int volume);
     
     // Mute/unmute all sounds
-    void toggleMute();
+    virtual void toggleMute();
     bool isMuted() const { return muted_; }
 
 private:

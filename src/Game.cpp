@@ -2,7 +2,7 @@
 #include <iostream>
 #include <algorithm>
 
-Game::Game() : 
+Game::Game(bool test_mode) : 
     window_(nullptr, SDL_DestroyWindow),
     renderer_(nullptr, SDL_DestroyRenderer),
     font_(nullptr, TTF_CloseFont),
@@ -13,26 +13,35 @@ Game::Game() :
     level_(INITIAL_LEVEL),
     linesCleared_(0) {
     
-    initSDL();
-    
-    soundManager_ = std::make_unique<SoundManager>();
-    if (!soundManager_->initialize()) {
-        std::cerr << "Warning: Sound system could not be initialized. Continuing without sound." << std::endl;
-    } else if (!soundManager_->loadSounds()) {
-        std::cerr << "Warning: Some sound effects could not be loaded." << std::endl;
+    if (!test_mode) {
+        initSDL();
+        
+        soundManager_ = std::make_unique<SoundManager>();
+        if (!soundManager_->initialize()) {
+            std::cerr << "Warning: Sound system could not be initialized. Continuing without sound." << std::endl;
+        } else if (!soundManager_->loadSounds()) {
+            std::cerr << "Warning: Some sound effects could not be loaded." << std::endl;
+        }
+        
+        // Create component managers - order matters due to dependencies
+        tetrominoManager_ = std::make_unique<TetrominoManager>(*this);
+        inputHandler_ = std::make_unique<InputHandler>(*this, *tetrominoManager_);
+        gameRenderer_ = std::make_unique<GameRenderer>(*this, *tetrominoManager_, renderer_.get(), font_.get());
+    } else {
+        // Just create the tetromino manager for test mode
+        soundManager_ = std::make_unique<SoundManager>();
+        tetrominoManager_ = std::make_unique<TetrominoManager>(*this);
     }
-    
-    // Create component managers - order matters due to dependencies
-    tetrominoManager_ = std::make_unique<TetrominoManager>(*this);
-    inputHandler_ = std::make_unique<InputHandler>(*this, *tetrominoManager_);
-    gameRenderer_ = std::make_unique<GameRenderer>(*this, *tetrominoManager_, renderer_.get(), font_.get());
     
     resetGame();
 }
 
 Game::~Game() {
-    TTF_Quit();
-    SDL_Quit();
+    // Only quit SDL if window was initialized (not in test mode)
+    if (window_) {
+        TTF_Quit();
+        SDL_Quit();
+    }
 }
 
 void Game::initSDL() {

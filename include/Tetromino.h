@@ -32,12 +32,13 @@ public:
     void rotateWithoutWallKick() {
         rotation_ = (rotation_ + 1) % 4;
     }
+    
+    // Made protected for testing
+    bool isValidPosition(const Game& game, int newX, int newY, int newRotation) const;
 
 private:
     TetrominoType type_;
     int x_;
     int y_;
     int rotation_;  // 0, 1, 2, or 3 (90-degree increments)
-
-    bool isValidPosition(const Game& game, int newX, int newY, int newRotation) const;
 };

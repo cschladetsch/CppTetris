@@ -18,11 +18,14 @@ include_directories(${SDL2_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS} ${SDL2_MIXER_I
 file(GLOB SOURCES src/*.cpp)
 file(GLOB HEADERS include/*.h)
 
-# Create executable
-add_executable(tetris ${SOURCES} ${HEADERS})
+# Create a library target for the core game logic
+# This allows the main executable and tests to share the same code
+add_library(tetris_lib STATIC ${SOURCES} ${HEADERS})
+target_link_libraries(tetris_lib ${SDL2_LIBRARIES} SDL2_ttf SDL2_mixer)
 
-# Link libraries
-target_link_libraries(tetris ${SDL2_LIBRARIES} SDL2_ttf SDL2_mixer)
+# Create executable
+add_executable(tetris src/main.cpp)
+target_link_libraries(tetris tetris_lib)
 
 # Check if resources directory exists before copying
 if(EXISTS ${CMAKE_SOURCE_DIR}/resources)
@@ -55,10 +58,19 @@ install(TARGETS tetris DESTINATION bin)
 # Optional: Enable warnings
 if(MSVC)
     target_compile_options(tetris PRIVATE /W4)
+    target_compile_options(tetris_lib PRIVATE /W4)
 else()
     target_compile_options(tetris PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(tetris_lib PRIVATE -Wall -Wextra -Wpedantic)
 endif()
+
+# Enable testing
+enable_testing()
+
+# Add tests directory
+add_subdirectory(tests)
 
 # Add a message to help users
 message(STATUS "Build with: cmake --build .")
 message(STATUS "Run with: ./tetris")
+message(STATUS "Run tests with: ctest")
