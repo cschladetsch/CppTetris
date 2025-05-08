@@ -45,9 +45,33 @@ Game::~Game() {
 }
 
 void Game::initSDL() {
+    // First, try setting the video driver to X11 for WSL2
+    SDL_setenv("SDL_VIDEODRIVER", "x11", 1);
+    
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
-        std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
-        exit(EXIT_FAILURE);
+        std::cerr << "First SDL init attempt failed, trying fallback video drivers" << std::endl;
+        
+        // If X11 fails, try other drivers
+        const char* drivers[] = {"wayland", "directfb", "dummy"};
+        bool success = false;
+        
+        for (const char* driver : drivers) {
+            SDL_setenv("SDL_VIDEODRIVER", driver, 1);
+            std::cout << "Trying SDL video driver: " << driver << std::endl;
+            
+            if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) >= 0) {
+                std::cout << "Successfully initialized SDL with driver: " << driver << std::endl;
+                success = true;
+                break;
+            }
+            
+            std::cerr << "Failed with driver " << driver << ": " << SDL_GetError() << std::endl;
+        }
+        
+        if (!success) {
+            std::cerr << "SDL could not initialize with any video driver! SDL_Error: " << SDL_GetError() << std::endl;
+            exit(EXIT_FAILURE);
+        }
     }
 
     if (TTF_Init() < 0) {
@@ -55,45 +79,88 @@ void Game::initSDL() {
         exit(EXIT_FAILURE);
     }
 
+    // Create window with additional flags for better compatibility
     window_.reset(SDL_CreateWindow("Tetris C++23", 
-                                   SDL_WINDOWPOS_UNDEFINED, 
-                                   SDL_WINDOWPOS_UNDEFINED, 
+                                   SDL_WINDOWPOS_CENTERED, 
+                                   SDL_WINDOWPOS_CENTERED, 
                                    WINDOW_WIDTH, 
                                    WINDOW_HEIGHT, 
-                                   SDL_WINDOW_SHOWN));
+                                   SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE));
     if (!window_) {
         std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
         exit(EXIT_FAILURE);
     }
+    
+    // Log window information
+    std::cout << "Window created successfully with dimensions: " 
+              << WINDOW_WIDTH << "x" << WINDOW_HEIGHT << std::endl;
 
+    // Try first with hardware acceleration
     renderer_.reset(SDL_CreateRenderer(window_.get(), -1, SDL_RENDERER_ACCELERATED));
+    
+    // If hardware acceleration fails, try software rendering
     if (!renderer_) {
-        std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
-        exit(EXIT_FAILURE);
+        std::cerr << "Hardware-accelerated renderer could not be created: " << SDL_GetError() << std::endl;
+        std::cerr << "Falling back to software renderer..." << std::endl;
+        
+        renderer_.reset(SDL_CreateRenderer(window_.get(), -1, SDL_RENDERER_SOFTWARE));
+        
+        if (!renderer_) {
+            std::cerr << "Software renderer could not be created either! SDL_Error: " << SDL_GetError() << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        
+        std::cout << "Successfully created software renderer" << std::endl;
+    } else {
+        std::cout << "Successfully created hardware-accelerated renderer" << std::endl;
     }
 
     loadFont();
 }
 
 void Game::loadFont() {
+    // List of fonts to try in order of preference
+    // The system fonts are full paths, the game-provided ones are relative
     const char* fontPaths[] = {
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/TTF/DejaVuSans.ttf",
-        "/usr/share/fonts/noto/NotoSans-Regular.ttf",
-        "resources/fonts/DejaVuSans.ttf",
-        "DejaVuSans.ttf",
-        "resources/fonts/Arial.ttf",
-        "Arial.ttf"
+        "resources/fonts/Arial.ttf",                    // Game provided Arial
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", // Known location in Ubuntu/Debian
+        "/usr/share/fonts/truetype/freefont/FreeSans.ttf", // Common fallback
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", // Another common one
+        "/usr/share/fonts/liberation-sans/LiberationSans-Regular.ttf", // Fedora/RHEL
+        "/usr/share/fonts/noto/NotoSans-Regular.ttf",   // Google Noto Sans
+        "/usr/share/fonts/TTF/DejaVuSans.ttf",          // Arch Linux
+        "DejaVuSans.ttf",                              // Current directory fallback
+        "Arial.ttf"                                    // Current directory fallback
     };
     
+    std::cout << "Attempting to load a font..." << std::endl;
+    
     for (const char* path : fontPaths) {
+        std::cout << "Trying font: " << path << std::endl;
         font_.reset(TTF_OpenFont(path, FONT_SIZE));
-        if (font_) break;
+        
+        if (font_) {
+            std::cout << "Successfully loaded font: " << path << std::endl;
+            break;
+        } else {
+            std::cerr << "Failed to load font from " << path << ": " << TTF_GetError() << std::endl;
+        }
     }
     
     if (!font_) {
-        std::cerr << "Failed to load font! TTF_Error: " << TTF_GetError() << std::endl;
+        std::cerr << "Failed to load any font! TTF_Error: " << TTF_GetError() << std::endl;
         std::cerr << "Will continue without font - using blocks for score display." << std::endl;
+    } else {
+        // Test font rendering with a simple string to make sure it's working
+        SDL_Color color = {255, 255, 255, 255};
+        SDL_Surface* testSurface = TTF_RenderText_Solid(font_.get(), "Test", color);
+        
+        if (!testSurface) {
+            std::cerr << "Font loaded but test rendering failed! TTF_Error: " << TTF_GetError() << std::endl;
+        } else {
+            std::cout << "Font rendering test successful." << std::endl;
+            SDL_FreeSurface(testSurface);
+        }
     }
 }
 

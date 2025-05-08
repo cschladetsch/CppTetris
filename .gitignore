@@ -1,5 +1,6 @@
 /.vs
 /build
+/resources/sounds
 
 
 compile_commands.json

@@ -1,5 +1,7 @@
 #include "SoundManager.h"
 #include <iostream>
+#include <vector>
+#include <utility>  // for std::pair
 
 SoundManager::SoundManager() 
     : initialized_(false), muted_(false), volume_(MIX_MAX_VOLUME) {
@@ -13,34 +15,67 @@ SoundManager::~SoundManager() {
 }
 
 bool SoundManager::initialize() {
-    SDL_setenv("SDL_AUDIODRIVER", "pulseaudio", 1);
+    // Try multiple audio drivers in order
+    const char* drivers[] = {"directsound", "wasapi", "pulseaudio", "alsa", "dummy"};
+    bool success = false;
     
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-        std::cerr << "SDL_mixer could not initialize! SDL_mixer Error: " << Mix_GetError() << std::endl;
+    for (const char* driver : drivers) {
+        std::cout << "Trying audio driver: " << driver << std::endl;
+        SDL_setenv("SDL_AUDIODRIVER", driver, 1);
+        
+        if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) >= 0) {
+            std::cout << "Successfully initialized audio with driver: " << driver << std::endl;
+            success = true;
+            break;
+        }
+        std::cerr << "Failed to initialize with " << driver << ": " << Mix_GetError() << std::endl;
+    }
+    
+    if (!success) {
+        std::cerr << "SDL_mixer could not initialize with any audio driver! SDL_mixer Error: " << Mix_GetError() << std::endl;
+        std::cerr << "Warning: Sound system could not be initialized. Continuing without sound." << std::endl;
         return false;
     }
     
     initialized_ = true;
-    
     Mix_Volume(-1, volume_);
-    
     return true;
 }
 bool SoundManager::loadSounds() {
     if (!initialized_) {
         std::cerr << "Cannot load sounds - audio system not initialized" << std::endl;
-        return false;
+        // Return true to prevent cascading failures
+        return true;
     }
     
     bool success = true;
-    success &= loadSound(SoundEffect::Move, "resources/sounds/move.wav");
-    success &= loadSound(SoundEffect::Rotate, "resources/sounds/rotate.wav");
-    success &= loadSound(SoundEffect::Drop, "resources/sounds/drop.wav");
-    success &= loadSound(SoundEffect::LineClear, "resources/sounds/clear.wav");
-    success &= loadSound(SoundEffect::LevelUp, "resources/sounds/levelup.wav");
-    success &= loadSound(SoundEffect::GameOver, "resources/sounds/gameover.wav");
     
-    return success;
+    // Check if sound files exist and attempt to load them
+    const std::vector<std::pair<SoundEffect, std::string>> soundFiles = {
+        {SoundEffect::Move, "resources/sounds/move.wav"},
+        {SoundEffect::Rotate, "resources/sounds/rotate.wav"},
+        {SoundEffect::Drop, "resources/sounds/drop.wav"},
+        {SoundEffect::LineClear, "resources/sounds/clear.wav"},
+        {SoundEffect::LevelUp, "resources/sounds/levelup.wav"},
+        {SoundEffect::GameOver, "resources/sounds/gameover.wav"}
+    };
+    
+    for (const auto& [effect, filename] : soundFiles) {
+        // Check if file exists before attempting to load
+        FILE* file = fopen(filename.c_str(), "r");
+        if (file) {
+            fclose(file);
+            success &= loadSound(effect, filename);
+        } else {
+            std::cerr << "Sound file not found: " << filename << std::endl;
+        }
+    }
+    
+    if (!success) {
+        std::cerr << "Warning: Some sounds could not be loaded, continuing with partial sound support" << std::endl;
+    }
+    
+    return true; // Always return true to allow game to continue
 }
 
 bool SoundManager::loadSound(SoundEffect effect, const std::string& filename) {
