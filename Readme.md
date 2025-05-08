@@ -173,6 +173,8 @@ make test
 
 # Run tests with simplified output (suppresses SDL errors)
 make test-mock
+# or directly:
+./tests/run_mock_tests.sh
 ```
 
 The test suite is organized into several test files:
